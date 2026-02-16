@@ -1,37 +1,41 @@
 :root{
   --bg:#070a0f;
   --text:#e9f0ff;
-  --muted:rgba(233,240,255,.70);
-  --glow:rgba(0,209,255,.18);
+  --muted: rgba(233,240,255,.70);
+  --line: rgba(255,255,255,.10);
+  --glow: rgba(0,209,255,.18);
 
-  /* Wheel sizing / peek area */
-  --wheelSize: min(92vw, 420px);
-  --wheelPeek: 140px; /* how much of wheel stays visible when sheet is open */
+  /* iPhone-first sizing */
+  --wheel-size: min(94vw, 430px);
+  --wheel-bottom: 14px;
+
+  /* sheet behavior */
+  --wheel-peek: 155px;   /* how much free zone remains for wheel interaction */
+  --sheet-height: 78vh;  /* sheet height */
 }
 
 *{ box-sizing:border-box; }
-
 html,body{
   margin:0;
   height:100%;
-  overflow:hidden; /* app-feel */
-  font-family: system-ui, -apple-system, Segoe UI, Roboto;
-  background:
-    radial-gradient(900px 500px at 50% 0%, rgba(0,209,255,.10), transparent 60%),
-    var(--bg);
+  overflow:hidden; /* app feel */
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
   color:var(--text);
+  background:
+    radial-gradient(900px 520px at 50% 0%, rgba(0,209,255,.10), transparent 60%),
+    radial-gradient(900px 520px at 20% 30%, rgba(0,209,255,.06), transparent 55%),
+    var(--bg);
 }
 
-/* Top bar */
+/* Topbar */
 .topbar{
   height:56px;
+  padding: 0 14px;
+  padding-top: env(safe-area-inset-top);
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:0 16px;
-  padding-top: env(safe-area-inset-top);
 }
-
 .brand{
   display:flex;
   align-items:center;
@@ -42,7 +46,7 @@ html,body{
 .dot{
   width:10px;
   height:10px;
-  border-radius:50%;
+  border-radius:999px;
   background: linear-gradient(135deg, rgba(0,209,255,1), rgba(0,209,255,.45));
   box-shadow: 0 0 18px rgba(0,209,255,.25);
 }
@@ -52,57 +56,58 @@ html,body{
 }
 
 /* Wheel */
-.wheelWrap{
+.wheelFixed{
   position:fixed;
   left:0;
   right:0;
-  bottom: calc(env(safe-area-inset-bottom) - 120px); /* push wheel down so it peeks */
+  bottom: var(--wheel-bottom);
   display:flex;
   justify-content:center;
-  z-index: 30;
+  z-index: 50; /* above sheet */
   pointer-events:auto;
 }
 
 .wheel{
   position:relative;
-  width: var(--wheelSize);
-  height: var(--wheelSize);
-  touch-action: none; /* allow custom swipe */
+  width: var(--wheel-size);
+  height: var(--wheel-size);
+  display:grid;
+  place-items:center;
   user-select:none;
+  touch-action:none; /* critical for iPhone */
 }
 
 .wheelRing{
   width:100%;
   height:100%;
   object-fit:contain;
-  filter: drop-shadow(0 0 24px rgba(0,209,255,.25));
+  filter: drop-shadow(0 0 26px rgba(0,209,255,.24));
   transition: transform 80ms linear;
+  pointer-events:none; /* IMPORTANT: events go to .wheel */
 }
-
 .wheelIcon{
   position:absolute;
-  left:50%;
-  top:50%;
-  transform: translate(-50%,-50%);
-  width: 84px;
-  height: 84px;
+  width: 86px;
+  height: 86px;
+  object-fit:contain;
   filter: drop-shadow(0 0 18px rgba(0,209,255,.18));
+  pointer-events:none; /* IMPORTANT */
 }
 
-/* Sheet (bottom sheet, leaves wheel peek visible) */
+/* Sheet */
 .sheet{
   position:fixed;
   left:0;
   right:0;
 
-  /* leave wheel peek area free */
-  bottom: calc(env(safe-area-inset-bottom) + var(--wheelPeek));
-  height: 78vh;
+  /* leave free zone for wheel */
+  bottom: calc(env(safe-area-inset-bottom) + var(--wheel-peek));
+  height: var(--sheet-height);
 
   transform: translateY(110%);
   transition: transform 280ms cubic-bezier(.22,1,.36,1);
-  z-index: 20;
-  pointer-events:none; /* becomes active when open */
+  z-index: 40; /* below wheel */
+  pointer-events:none;
 }
 
 .sheet.open{
@@ -118,51 +123,98 @@ html,body{
   background: rgba(18,22,30,.62);
   backdrop-filter: blur(22px);
   box-shadow: 0 -30px 70px rgba(0,0,0,.55);
-  position:relative;
   overflow:hidden;
+  position:relative;
 }
 
-.sheetContent{
-  height:100%;
-  overflow:auto;
-  padding: 18px 18px 70px; /* bottom space for close button */
+.sheetHeader{
+  padding: 14px 16px 8px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
 }
-
 .sheetTitle{
-  margin: 0 0 10px;
-  font-size: 18px;
   font-weight: 900;
+  font-size: 16px;
+  letter-spacing:.2px;
 }
 
 .sheetBody{
-  font-size: 14px;
-  line-height: 1.55;
-  color: rgba(233,240,255,.90);
+  height: calc(100% - 54px);
+  overflow:auto;
+  padding: 14px 16px 84px; /* room for close button */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Close button centered at bottom edge */
 .sheetClose{
   position:absolute;
   left:50%;
-  bottom: 12px;
+  bottom: 10px;
   transform: translateX(-50%);
-  width: 52px;
-  height: 52px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.12);
+  width: 54px;
+  height: 54px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.06);
   backdrop-filter: blur(14px);
   color: rgba(233,240,255,.92);
   font-size: 20px;
   font-weight: 900;
   cursor:pointer;
-  z-index: 5;
 }
 .sheetClose:active{
   transform: translateX(-50%) scale(.98);
 }
 
-/* Small screens tuning */
+/* Generic view blocks inside sheet */
+.card{
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.cardTitle{
+  font-weight: 900;
+  font-size: 13px;
+  color: rgba(233,240,255,.92);
+  margin-bottom: 8px;
+}
+.hint{
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Calendar embed (kept minimal, darkened with overlay) */
+.calWrap{
+  position:relative;
+  border-radius: 16px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.12);
+}
+.calScale{
+  width: 130%;
+  height: 130%;
+  transform: scale(.77);
+  transform-origin: top left;
+}
+.calFrame{
+  width:100%;
+  height: 320px;
+  border:0;
+  display:block;
+}
+.calOverlay{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.32);
+  pointer-events:none;
+  mix-blend-mode: multiply;
+}
+
+/* Small phones */
 @media (max-width: 380px){
-  .wheelIcon{ width: 74px; height: 74px; }
+  .wheelIcon{ width: 76px; height: 76px; }
+  :root{ --wheel-peek: 140px; }
 }
