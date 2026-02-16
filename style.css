@@ -1,83 +1,54 @@
 :root{
   --bg:#070a0f;
-  --glow:rgba(0,209,255,.18);
   --text:#e9f0ff;
+  --muted:rgba(233,240,255,.70);
+  --glow:rgba(0,209,255,.18);
+
+  /* Wheel sizing / peek area */
+  --wheelSize: min(92vw, 420px);
+  --wheelPeek: 140px; /* how much of wheel stays visible when sheet is open */
 }
 
-*{box-sizing:border-box}
+*{ box-sizing:border-box; }
 
 html,body{
   margin:0;
   height:100%;
-  overflow:hidden;
-  background:
-    radial-gradient(1200px 600px at 50% 0%, rgba(0,209,255,.08), transparent 60%),
-    var(--bg);
+  overflow:hidden; /* app-feel */
   font-family: system-ui, -apple-system, Segoe UI, Roboto;
+  background:
+    radial-gradient(900px 500px at 50% 0%, rgba(0,209,255,.10), transparent 60%),
+    var(--bg);
   color:var(--text);
 }
 
-/* Top */
+/* Top bar */
 .topbar{
   height:56px;
   display:flex;
   align-items:center;
   justify-content:space-between;
   padding:0 16px;
+  padding-top: env(safe-area-inset-top);
 }
 
 .brand{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:10px;
   font-weight:900;
+  letter-spacing:.2px;
 }
-
 .dot{
   width:10px;
   height:10px;
   border-radius:50%;
-  background:#00d1ff;
+  background: linear-gradient(135deg, rgba(0,209,255,1), rgba(0,209,255,.45));
+  box-shadow: 0 0 18px rgba(0,209,255,.25);
 }
-
 .preview{
   font-size:12px;
-  opacity:.7;
-}
-
-/* Sheet */
-.sheet{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  height:85vh;
-  background:rgba(20,25,35,.6);
-  backdrop-filter:blur(20px);
-  border-top-left-radius:24px;
-  border-top-right-radius:24px;
-  transform:translateY(100%);
-  transition:transform .3s cubic-bezier(.22,1,.36,1);
-  display:flex;
-  flex-direction:column;
-}
-
-.sheet.open{
-  transform:translateY(0);
-}
-
-.sheetContent{
-  flex:1;
-  overflow:auto;
-  padding:20px;
-}
-
-.sheetClose{
-  height:50px;
-  border:none;
-  background:none;
-  font-size:20px;
-  color:white;
+  color: var(--muted);
 }
 
 /* Wheel */
@@ -85,32 +56,113 @@ html,body{
   position:fixed;
   left:0;
   right:0;
-  bottom:0;
+  bottom: calc(env(safe-area-inset-bottom) - 120px); /* push wheel down so it peeks */
   display:flex;
   justify-content:center;
-  padding-bottom:20px;
+  z-index: 30;
+  pointer-events:auto;
 }
 
 .wheel{
   position:relative;
-  width:90vw;
-  max-width:420px;
-  aspect-ratio:1/1;
+  width: var(--wheelSize);
+  height: var(--wheelSize);
+  touch-action: none; /* allow custom swipe */
+  user-select:none;
 }
 
 .wheelRing{
   width:100%;
   height:100%;
   object-fit:contain;
-  filter:drop-shadow(0 0 20px rgba(0,209,255,.3));
-  transition:transform .1s linear;
+  filter: drop-shadow(0 0 24px rgba(0,209,255,.25));
+  transition: transform 80ms linear;
 }
 
 .wheelIcon{
   position:absolute;
-  top:50%;
   left:50%;
-  width:80px;
-  height:80px;
-  transform:translate(-50%,-50%);
+  top:50%;
+  transform: translate(-50%,-50%);
+  width: 84px;
+  height: 84px;
+  filter: drop-shadow(0 0 18px rgba(0,209,255,.18));
+}
+
+/* Sheet (bottom sheet, leaves wheel peek visible) */
+.sheet{
+  position:fixed;
+  left:0;
+  right:0;
+
+  /* leave wheel peek area free */
+  bottom: calc(env(safe-area-inset-bottom) + var(--wheelPeek));
+  height: 78vh;
+
+  transform: translateY(110%);
+  transition: transform 280ms cubic-bezier(.22,1,.36,1);
+  z-index: 20;
+  pointer-events:none; /* becomes active when open */
+}
+
+.sheet.open{
+  transform: translateY(0);
+  pointer-events:auto;
+}
+
+.sheetInner{
+  height:100%;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(18,22,30,.62);
+  backdrop-filter: blur(22px);
+  box-shadow: 0 -30px 70px rgba(0,0,0,.55);
+  position:relative;
+  overflow:hidden;
+}
+
+.sheetContent{
+  height:100%;
+  overflow:auto;
+  padding: 18px 18px 70px; /* bottom space for close button */
+}
+
+.sheetTitle{
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.sheetBody{
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(233,240,255,.90);
+}
+
+/* Close button centered at bottom edge */
+.sheetClose{
+  position:absolute;
+  left:50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  backdrop-filter: blur(14px);
+  color: rgba(233,240,255,.92);
+  font-size: 20px;
+  font-weight: 900;
+  cursor:pointer;
+  z-index: 5;
+}
+.sheetClose:active{
+  transform: translateX(-50%) scale(.98);
+}
+
+/* Small screens tuning */
+@media (max-width: 380px){
+  .wheelIcon{ width: 74px; height: 74px; }
 }
