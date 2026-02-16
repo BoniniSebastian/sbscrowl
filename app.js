@@ -1,158 +1,233 @@
+/* SBScrowl v1
+   - iPhone-first, locked body
+   - Big wheel bottom, live icon changes while rotating
+   - Tap wheel to open sheet
+   - When sheet open: rotating wheel changes view live in sheet
+   - Close button centered bottom edge
+*/
 (() => {
   "use strict";
 
-  const VIEWS = [
-    { id:"weather",   icon:"assets/ui/icon-weather.svg",   label:"Weather" },
-    { id:"news",      icon:"assets/ui/icon-news.svg",      label:"News" },
-    { id:"todo",      icon:"assets/ui/icon-todo.svg",      label:"Todo" },
-    { id:"ideas",     icon:"assets/ui/icon-ideas.svg",     label:"Ideas" },
-    { id:"done",      icon:"assets/ui/icon-done.svg",      label:"Done" },
-    { id:"pomodoro",  icon:"assets/ui/icon-pomodoro.svg",  label:"Timer" }
-  ];
+  const $ = (id) => document.getElementById(id);
 
-  const els = {
-    wheel: document.getElementById("wheel"),
-    wheelRing: document.getElementById("wheelRing"),
-    wheelIcon: document.getElementById("wheelIcon"),
-    previewText: document.getElementById("previewText"),
+  // ---------- Views ----------
+  // NOTE: We keep "pomodoro" id to reuse your existing icon name.
+  const VIEWS = ["weather", "calendar", "news", "todo", "ideas", "done", "prio", "pomodoro"];
 
-    sheet: document.getElementById("sheet"),
-    sheetTitle: document.getElementById("sheetTitle"),
-    sheetBody: document.getElementById("sheetBody"),
-    sheetClose: document.getElementById("sheetClose"),
+  const ICONS = {
+    weather:   "assets/ui/icon-weather.svg",
+    calendar:  "assets/ui/icon-weather.svg",   // (du kan byta senare om du gör en kalender-ikon)
+    news:      "assets/ui/icon-news.svg",
+    todo:      "assets/ui/icon-todo.svg",
+    ideas:     "assets/ui/icon-ideas.svg",
+    done:      "assets/ui/icon-done.svg",
+    prio:      "assets/ui/icon-todo.svg",      // (du kan byta senare om du gör en prio-ikon)
+    pomodoro:  "assets/ui/icon-pomodoro.svg",  // Timer
   };
 
-  const state = {
-    activeIndex: 0,
-    isOpen: false,
-    rotationDeg: 0,
-    drag: { on:false, startY:0, lastY:0, accum:0 },
-    wheelCooldown: false,
+  const LABELS = {
+    weather: "Väder",
+    calendar:"Kalender",
+    news: "Nyheter",
+    todo: "Att göra",
+    ideas: "Idéer",
+    done: "Slutförda",
+    prio: "Aktiv prio",
+    pomodoro: "Timer",
   };
 
-  function clampIndex(i){
-    if (i < 0) return VIEWS.length - 1;
-    if (i >= VIEWS.length) return 0;
-    return i;
+  // ---------- Elements ----------
+  const wheelEl   = $("wheel");
+  const ringEl    = $("wheelRing");
+  const iconEl    = $("wheelIcon");
+  const previewEl = $("previewText");
+
+  const sheetEl   = $("sheet");
+  const sheetTitle= $("sheetTitle");
+  const sheetBody = $("sheetBody");
+  const sheetClose= $("sheetClose");
+
+  // ---------- State ----------
+  let currentIndex = 0;
+  let sheetOpen = false;
+
+  // ---------- Helpers ----------
+  const clampIndex = (i) => (i + VIEWS.length) % VIEWS.length;
+
+  function setViewByIndex(idx, { silent = false } = {}) {
+    currentIndex = clampIndex(idx);
+    const view = VIEWS[currentIndex];
+
+    if (iconEl && ICONS[view]) iconEl.src = ICONS[view];
+    if (previewEl) previewEl.textContent = `${LABELS[view] || view}`;
+
+    if (sheetOpen) renderSheet(view);
+
+    // snap ring to view index when not dragging
+    if (!silent) syncRotationToIndex();
   }
 
-  function setIndex(i){
-    state.activeIndex = clampIndex(i);
-    const v = VIEWS[state.activeIndex];
+  function openSheet() {
+    if (sheetOpen) return;
+    sheetOpen = true;
+    if (sheetEl) {
+      sheetEl.classList.add("open");
+      sheetEl.setAttribute("aria-hidden", "false");
+    }
+    renderSheet(VIEWS[currentIndex]);
+  }
 
-    // live icon preview
-    els.wheelIcon.src = v.icon;
-    els.previewText.textContent = `Preview: ${v.label}`;
-
-    // if open, update sheet content immediately
-    if (state.isOpen) {
-      renderSheetView();
+  function closeSheet() {
+    sheetOpen = false;
+    if (sheetEl) {
+      sheetEl.classList.remove("open");
+      sheetEl.setAttribute("aria-hidden", "true");
     }
   }
 
-  function renderSheetView(){
-    const v = VIEWS[state.activeIndex];
-    els.sheetTitle.textContent = v.label;
+  // ---------- Render views (placeholders now, we can wire real modules next) ----------
+  function renderSheet(view) {
+    if (sheetTitle) sheetTitle.textContent = LABELS[view] || view;
+    if (!sheetBody) return;
 
-    // Minimal placeholder content for now (we wire real modules later)
-    els.sheetBody.innerHTML = `
-      <div style="opacity:.85">
-        <p><b>${v.label}</b> (placeholder)</p>
-        <p>Här bygger vi in samma funktionalitet som SB Dash: väder, nyheter, todo, idéer, done, aktiv prio, kalender, osv.</p>
+    if (view === "calendar") {
+      sheetBody.innerHTML = `
+        <div class="card">
+          <div class="cardTitle">Google Kalender</div>
+          <div class="calWrap">
+            <div class="calScale">
+              <iframe
+                class="calFrame"
+                src="https://calendar.google.com/calendar/embed?src=ZXJpY3Nzb25ib25pbmlAZ21haWwuY29t&mode=AGENDA&ctz=Europe%2FStockholm&hl=sv&showTitle=0&showTabs=0&showNav=0&showPrint=0&showCalendars=0&showDate=0"
+                scrolling="no"
+                frameborder="0"></iframe>
+            </div>
+            <div class="calOverlay" aria-hidden="true"></div>
+          </div>
+          <div class="hint" style="margin-top:10px;">(Nästa steg: göra den kompakt + snabb.)</div>
+        </div>
+      `;
+      return;
+    }
+
+    sheetBody.innerHTML = `
+      <div class="card">
+        <div class="cardTitle">${LABELS[view] || view}</div>
+        <div class="hint">
+          Detta är placeholder-vyn för <b>${LABELS[view] || view}</b>.<br>
+          Nästa steg är att flytta in exakt samma funktionalitet som i SB Dash för:
+          väder, nyheter, todo/idéer/done, aktiv prio och timer.
+        </div>
       </div>
     `;
   }
 
-  function openSheet(){
-    if (state.isOpen) return;
-    state.isOpen = true;
-    els.sheet.classList.add("open");
-    els.sheet.setAttribute("aria-hidden", "false");
-    renderSheetView();
+  // ---------- Dial logic (FROM SB Dash) ----------
+  let isDragging = false;
+  let startAngle = 0;
+  let currentRotation = 0;
+
+  const STEP = 360 / VIEWS.length;
+  let lastSector = 0;
+
+  const angle = (cx, cy, mx, my) => Math.atan2(my - cy, mx - cx) * (180 / Math.PI);
+
+  function setRotation(deg) {
+    currentRotation = deg;
+    if (ringEl) ringEl.style.transform = `rotate(${deg}deg)`;
   }
 
-  function closeSheet(){
-    state.isOpen = false;
-    els.sheet.classList.remove("open");
-    els.sheet.setAttribute("aria-hidden", "true");
+  function sectorFromRotation(deg) {
+    const raw = Math.round(deg / STEP);
+    return ((raw % VIEWS.length) + VIEWS.length) % VIEWS.length;
   }
 
-  // --- Wheel interaction: iPhone swipe up/down on the wheel ---
-  function step(dir){
-    if (state.wheelCooldown) return;
-    state.wheelCooldown = true;
-    setIndex(state.activeIndex + dir);
-
-    // small visual ring nudge
-    state.rotationDeg += (dir > 0 ? 10 : -10);
-    els.wheelRing.style.transform = `rotate(${state.rotationDeg}deg)`;
-
-    setTimeout(() => (state.wheelCooldown = false), 120);
+  function syncRotationToIndex() {
+    setRotation(currentIndex * STEP);
+    lastSector = currentIndex;
   }
 
-  function onDown(e){
-    state.drag.on = true;
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    state.drag.startY = y;
-    state.drag.lastY = y;
-    state.drag.accum = 0;
+  function onDown(e) {
+    if (!wheelEl) return;
+    isDragging = true;
+
+    // pointer capture keeps moves coming even if finger drifts
+    wheelEl.setPointerCapture?.(e.pointerId);
+
+    e.preventDefault();
+
+    const r = wheelEl.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    startAngle = angle(cx, cy, e.clientX, e.clientY) - currentRotation;
   }
 
-  function onMove(e){
-    if (!state.drag.on) return;
+  function onMove(e) {
+    if (!isDragging) return;
+    e.preventDefault();
 
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    const dy = y - state.drag.lastY;
-    state.drag.lastY = y;
+    const r = wheelEl.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
 
-    // prevent page scrolling / rubber band
-    if (e.cancelable) e.preventDefault();
+    setRotation(angle(cx, cy, e.clientX, e.clientY) - startAngle);
 
-    // accumulate movement
-    state.drag.accum += dy;
+    const s = sectorFromRotation(currentRotation);
+    if (s !== lastSector) {
+      lastSector = s;
+      const view = VIEWS[s];
+      if (iconEl && ICONS[view]) iconEl.src = ICONS[view]; // live change while rotating
+      if (previewEl) previewEl.textContent = `${LABELS[view] || view}`;
 
-    // threshold per step (tune)
-    const TH = 18;
-
-    if (state.drag.accum <= -TH){
-      state.drag.accum = 0;
-      step(+1);
-    } else if (state.drag.accum >= TH){
-      state.drag.accum = 0;
-      step(-1);
+      // If sheet is open, change view live as you rotate (no extra tap)
+      if (sheetOpen) renderSheet(view);
     }
   }
 
-  function onUp(){
-    state.drag.on = false;
-    state.drag.accum = 0;
+  function onUp(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    e.preventDefault();
 
-    // snap feel (optional micro-settle)
-    els.wheelRing.style.transform = `rotate(${state.rotationDeg}deg)`;
+    const finalIndex = sectorFromRotation(currentRotation);
+
+    // If sheet is closed: keep preview on release but do not open automatically
+    // If sheet is open: commit view (already rendered live)
+    currentIndex = finalIndex;
+    const view = VIEWS[currentIndex];
+
+    if (iconEl && ICONS[view]) iconEl.src = ICONS[view];
+    if (previewEl) previewEl.textContent = `${LABELS[view] || view}`;
+    if (sheetOpen) renderSheet(view);
+
+    syncRotationToIndex();
   }
 
-  // click to open when closed
-  els.wheel.addEventListener("click", () => {
-    if (!state.isOpen) openSheet();
-  });
+  // Attach events
+  if (wheelEl) {
+    wheelEl.addEventListener("pointerdown", onDown, { passive: false });
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp, { passive: false });
+    window.addEventListener("pointercancel", onUp, { passive: false });
 
-  // touch handlers (iPhone)
-  els.wheel.addEventListener("touchstart", onDown, { passive: true });
-  els.wheel.addEventListener("touchmove", onMove, { passive: false });
-  els.wheel.addEventListener("touchend", onUp, { passive: true });
-  els.wheel.addEventListener("touchcancel", onUp, { passive: true });
+    // Tap to open sheet (only when closed)
+    wheelEl.addEventListener("click", () => {
+      if (!sheetOpen) openSheet();
+    });
 
-  // desktop fallback (wheel event)
-  els.wheel.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    const dir = e.deltaY > 0 ? 1 : -1;
-    step(dir);
-  }, { passive:false });
+    // Desktop wheel scroll over the wheel (optional)
+    wheelEl.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const dir = e.deltaY > 0 ? 1 : -1;
+      setViewByIndex(currentIndex + dir, { silent: true });
+      syncRotationToIndex();
+    }, { passive: false });
+  }
 
-  // close button
-  els.sheetClose.addEventListener("click", closeSheet);
+  if (sheetClose) sheetClose.addEventListener("click", closeSheet);
 
-  // init
-  setIndex(0);
-  closeSheet(); // start closed
+  // ---------- Init ----------
+  closeSheet();               // start closed
+  setViewByIndex(0, { silent: true });
+  syncRotationToIndex();
 })();
