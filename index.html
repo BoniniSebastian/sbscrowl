@@ -1,100 +1,39 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>SBScrowl</title>
   <link rel="stylesheet" href="style.css?v=1">
 </head>
 <body>
-  <div id="app" class="app">
-    <!-- Background glow -->
-    <div class="bgGlow" aria-hidden="true"></div>
 
-    <!-- Top area (optional small header) -->
-    <header class="topBar">
-      <div class="brand">
-        <span class="brandDot"></span>
-        <span class="brandText">SBScrowl</span>
+  <!-- Header -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="dot"></div>
+      <div>SBScrowl</div>
+    </div>
+    <div class="preview" id="previewText">Preview: Weather</div>
+  </header>
+
+  <!-- Bottom sheet -->
+  <div class="sheet" id="sheet">
+    <div class="sheetContent" id="sheetContent">
+      <h2 id="sheetTitle">Weather</h2>
+      <div id="sheetBody">
+        Innehåll laddas här…
       </div>
-      <div class="miniStatus" id="miniStatus">—</div>
-    </header>
+    </div>
 
-    <!-- Bottom sheet (modal-like) -->
-    <section
-      id="sheet"
-      class="sheet"
-      role="dialog"
-      aria-modal="true"
-      aria-label="SBScrowl Sheet"
-      data-open="false"
-    >
-      <div class="sheetInner">
-        <!-- Sheet header -->
-        <div class="sheetHeader">
-          <div class="sheetTitleRow">
-            <div class="sheetTitle">
-              <span id="sheetTitleText">—</span>
-            </div>
+    <button class="sheetClose" id="sheetClose">✕</button>
+  </div>
 
-            <!-- Aktiv prio card -->
-            <button id="prioCard" class="prioCard" type="button" aria-label="Aktiv prio (tryck för att redigera)">
-              <div class="prioLabel">Aktiv prio</div>
-              <div class="prioValue" id="prioValue">Tryck för att sätta…</div>
-            </button>
-          </div>
-
-          <!-- Subtle divider -->
-          <div class="sheetDivider"></div>
-        </div>
-
-        <!-- Scrollable content area -->
-        <div id="sheetScroll" class="sheetScroll" tabindex="0">
-          <div id="viewContainer" class="viewContainer"></div>
-        </div>
-
-        <!-- Close button centered on bottom edge -->
-        <button id="sheetClose" class="sheetClose" type="button" aria-label="Stäng">
-          ✕
-        </button>
-      </div>
-    </section>
-
-    <!-- Wheel dock -->
-    <footer id="wheelDock" class="wheelDock" role="navigation" aria-label="Wheel navigation">
-      <div class="wheelGlow" aria-hidden="true"></div>
-
-      <!-- Ring background -->
-      <img class="wheelRing" src="assets/ui/knob-ring.svg" alt="" aria-hidden="true" />
-
-      <!-- Scrollable icon track -->
-      <div id="wheelTrack" class="wheelTrack" aria-label="Views">
-        <!-- items injected by JS -->
-      </div>
-
-      <!-- Center icon + label -->
-      <div class="wheelCenter" aria-hidden="true">
-        <div class="wheelCenterIcon">
-          <img id="wheelCenterImg" src="assets/ui/icon-weather.svg" alt="" />
-        </div>
-        <div class="wheelCenterLabel" id="wheelCenterLabel">Weather</div>
-      </div>
-
-      <!-- Tap target overlay (so the whole wheel is tappable) -->
-      <button id="wheelTap" class="wheelTap" type="button" aria-label="Öppna/stäng och välj view"></button>
-    </footer>
-
-    <!-- Prio edit modal (inside app, no external libs) -->
-    <div id="prioModal" class="prioModal" aria-hidden="true">
-      <div class="prioModalBackdrop"></div>
-      <div class="prioModalCard" role="dialog" aria-modal="true" aria-label="Redigera aktiv prio">
-        <div class="prioModalTitle">Aktiv prio</div>
-        <textarea id="prioInput" class="prioInput" rows="3" placeholder="Skriv din aktiva prio…"></textarea>
-        <div class="prioModalActions">
-          <button id="prioCancel" class="btnGhost" type="button">Avbryt</button>
-          <button id="prioSave" class="btnPrimary" type="button">Spara</button>
-        </div>
-      </div>
+  <!-- Wheel -->
+  <div class="wheelWrap">
+    <div class="wheel" id="wheel">
+      <img class="wheelRing" src="assets/ui/knob-ring.svg" alt="">
+      <img class="wheelIcon" id="wheelIcon" src="assets/ui/icon-weather.svg" alt="">
     </div>
   </div>
 
