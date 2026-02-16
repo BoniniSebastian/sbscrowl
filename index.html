@@ -4,41 +4,43 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>SBScrowl</title>
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
+  <!-- Top (minimal) -->
   <header class="topbar">
     <div class="brand">
-      <div class="dot"></div>
-      <div>SBScrowl</div>
+      <span class="dot"></span>
+      <span class="brandText">SBScrowl</span>
     </div>
-    <div class="preview" id="previewText">Preview: Weather</div>
+    <div class="preview" id="previewText">—</div>
   </header>
 
-  <!-- Bottom sheet (covers most of screen, leaves wheel peek visible) -->
+  <!-- Sheet (bottom) -->
   <div class="sheet" id="sheet" aria-hidden="true">
     <div class="sheetInner">
-      <div class="sheetContent" id="sheetContent">
-        <h2 class="sheetTitle" id="sheetTitle">Weather</h2>
-        <div class="sheetBody" id="sheetBody">
-          Innehåll laddas här…
-        </div>
+      <div class="sheetHeader">
+        <div class="sheetTitle" id="sheetTitle">—</div>
       </div>
 
-      <!-- Close button centered at bottom edge -->
+      <div class="sheetBody" id="sheetBody">
+        <!-- injected by JS -->
+      </div>
+
+      <!-- Close button centered bottom edge -->
       <button class="sheetClose" id="sheetClose" aria-label="Stäng">✕</button>
     </div>
   </div>
 
-  <!-- Wheel (fixed, large, touch-friendly) -->
-  <div class="wheelWrap">
+  <!-- Wheel (always visible, behind/under sheet area) -->
+  <div class="wheelFixed" aria-label="Wheel">
     <div class="wheel" id="wheel" role="button" aria-label="Scrollhjul">
       <img class="wheelRing" id="wheelRing" src="assets/ui/knob-ring.svg" alt="">
       <img class="wheelIcon" id="wheelIcon" src="assets/ui/icon-weather.svg" alt="">
     </div>
   </div>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
