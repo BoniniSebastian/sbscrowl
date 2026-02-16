@@ -1,569 +1,116 @@
 :root{
-  --bg: #05070b;
-  --bg2: #060b12;
-  --cyan: rgba(0, 255, 220, 0.55);
-  --cyan2: rgba(0, 255, 220, 0.18);
-  --glass: rgba(14, 18, 26, 0.58);
-  --glass2: rgba(14, 18, 26, 0.38);
-  --border: rgba(255,255,255,0.10);
-  --border2: rgba(255,255,255,0.07);
-  --text: rgba(255,255,255,0.92);
-  --muted: rgba(255,255,255,0.62);
-  --muted2: rgba(255,255,255,0.45);
-  --shadowUp: 0 -18px 48px rgba(0,0,0,0.55);
-  --shadowSoft: 0 18px 48px rgba(0,0,0,0.55);
-
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --dur: 280ms;
-
-  --wheel-h: 118px;
-  --wheel-pad: 14px;
-  --wheel-item: 78px;
-
-  --sheet-h: 85vh;
-  --sheet-radius: 22px;
-  --safe-b: env(safe-area-inset-bottom);
-  --safe-t: env(safe-area-inset-top);
+  --bg:#070a0f;
+  --glow:rgba(0,209,255,.18);
+  --text:#e9f0ff;
 }
 
-*{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body{
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  background: radial-gradient(1200px 800px at 60% -10%, rgba(0,255,220,0.10), transparent 55%),
-              radial-gradient(900px 600px at 10% 20%, rgba(0,255,220,0.06), transparent 55%),
-              linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
-  color: var(--text);
-  overflow: hidden; /* lock body scroll */
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, Segoe UI, Roboto, Arial, sans-serif;
-}
+*{box-sizing:border-box}
 
-.app{
-  position: relative;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-}
-
-/* Subtle animated glow background */
-.bgGlow{
-  position: absolute;
-  inset: -40px;
+html,body{
+  margin:0;
+  height:100%;
+  overflow:hidden;
   background:
-    radial-gradient(700px 480px at 70% 20%, rgba(0,255,220,0.10), transparent 60%),
-    radial-gradient(560px 360px at 25% 40%, rgba(0,255,220,0.08), transparent 60%),
-    radial-gradient(800px 520px at 50% 110%, rgba(0,255,220,0.06), transparent 60%);
-  filter: blur(0px);
-  opacity: 0.9;
-  pointer-events: none;
+    radial-gradient(1200px 600px at 50% 0%, rgba(0,209,255,.08), transparent 60%),
+    var(--bg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto;
+  color:var(--text);
 }
 
-/* Top bar */
-.topBar{
-  position: fixed;
-  top: 0;
-  left: 0; right: 0;
-  padding: calc(14px + var(--safe-t)) 16px 10px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 5;
-  pointer-events: none;
+/* Top */
+.topbar{
+  height:56px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 16px;
 }
+
 .brand{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  pointer-events: none;
-}
-.brandDot{
-  width: 10px; height: 10px;
-  border-radius: 99px;
-  background: rgba(0,255,220,0.9);
-  box-shadow: 0 0 18px rgba(0,255,220,0.35);
-}
-.brandText{
-  font-weight: 650;
-  letter-spacing: 0.2px;
-  font-size: 14px;
-  color: rgba(255,255,255,0.88);
-}
-.miniStatus{
-  font-size: 12px;
-  color: var(--muted2);
-  max-width: 58vw;
-  text-align: right;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight:900;
 }
 
-/* Bottom Sheet */
+.dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#00d1ff;
+}
+
+.preview{
+  font-size:12px;
+  opacity:.7;
+}
+
+/* Sheet */
 .sheet{
-  position: fixed;
-  left: 10px;
-  right: 10px;
-  bottom: calc(var(--wheel-h) + var(--safe-b) + 10px);
-  height: var(--sheet-h);
-  max-height: calc(100vh - var(--wheel-h) - var(--safe-b) - 24px);
-  border-radius: var(--sheet-radius);
-  background: var(--glass);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadowUp);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  z-index: 20;
-
-  transform: translateY(calc(110% + 40px));
-  transition: transform var(--dur) var(--ease);
-  overflow: visible;
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  height:85vh;
+  background:rgba(20,25,35,.6);
+  backdrop-filter:blur(20px);
+  border-top-left-radius:24px;
+  border-top-right-radius:24px;
+  transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.22,1,.36,1);
+  display:flex;
+  flex-direction:column;
 }
 
-.sheet[data-open="true"]{
-  transform: translateY(0);
+.sheet.open{
+  transform:translateY(0);
 }
 
-.sheetInner{
-  position: relative;
-  height: 100%;
-  border-radius: var(--sheet-radius);
-  overflow: hidden;
+.sheetContent{
+  flex:1;
+  overflow:auto;
+  padding:20px;
 }
 
-.sheetHeader{
-  padding: 14px 14px 10px 14px;
-  background: linear-gradient(180deg, rgba(10,14,20,0.55), rgba(10,14,20,0.18));
-  border-bottom: 1px solid var(--border2);
-}
-
-.sheetTitleRow{
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.sheetTitle{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 16px;
-  font-weight: 750;
-  letter-spacing: 0.2px;
-}
-
-.sheetDivider{
-  height: 1px;
-  background: rgba(255,255,255,0.06);
-  margin-top: 10px;
-}
-
-/* Aktiv prio card */
-.prioCard{
-  width: 100%;
-  border-radius: 16px;
-  border: 1px solid rgba(0,255,220,0.18);
-  background: rgba(0,255,220,0.07);
-  color: var(--text);
-  padding: 12px 12px;
-  text-align: left;
-  box-shadow: 0 0 0 rgba(0,0,0,0);
-  transition: transform 120ms var(--ease), border-color 120ms var(--ease);
-}
-.prioCard:active{
-  transform: scale(0.99);
-  border-color: rgba(0,255,220,0.28);
-}
-.prioLabel{
-  font-size: 11px;
-  letter-spacing: 0.2px;
-  color: rgba(0,255,220,0.88);
-  margin-bottom: 6px;
-}
-.prioValue{
-  font-size: 13px;
-  color: rgba(255,255,255,0.86);
-  line-height: 1.25;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Scroll area */
-.sheetScroll{
-  position: absolute;
-  left: 0; right: 0;
-  top: 132px; /* header height approx; safe and stable */
-  bottom: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  padding: 14px 14px 38px 14px; /* room for close button overlap */
-}
-
-.viewContainer{
-  min-height: 100%;
-}
-
-/* Centered close button on bottom edge */
 .sheetClose{
-  position: absolute;
-  left: 50%;
-  bottom: -18px;
-  transform: translateX(-50%);
-  width: 52px;
-  height: 36px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(14,18,26,0.65);
-  color: rgba(255,255,255,0.90);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.45);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  font-size: 18px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height:50px;
+  border:none;
+  background:none;
+  font-size:20px;
+  color:white;
 }
 
-/* Wheel Dock */
-.wheelDock{
-  position: fixed;
-  left: 0; right: 0;
-  bottom: 0;
-  height: calc(var(--wheel-h) + var(--safe-b));
-  padding: 0 var(--wheel-pad) var(--safe-b) var(--wheel-pad);
-  z-index: 30;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+/* Wheel */
+.wheelWrap{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  display:flex;
+  justify-content:center;
+  padding-bottom:20px;
 }
 
-.wheelGlow{
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: calc(10px + var(--safe-b));
-  height: 96px;
-  border-radius: 26px;
-  background: radial-gradient(600px 140px at 50% 50%, rgba(0,255,220,0.14), transparent 60%),
-              linear-gradient(180deg, rgba(0,255,220,0.08), rgba(0,0,0,0));
-  filter: blur(0px);
-  pointer-events: none;
+.wheel{
+  position:relative;
+  width:90vw;
+  max-width:420px;
+  aspect-ratio:1/1;
 }
 
 .wheelRing{
-  position: absolute;
-  width: min(520px, calc(100vw - 28px));
-  height: 96px;
-  bottom: calc(10px + var(--safe-b));
-  opacity: 0.95;
-  pointer-events: none;
-  filter: drop-shadow(0 0 18px rgba(0,255,220,0.18));
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  filter:drop-shadow(0 0 20px rgba(0,209,255,.3));
+  transition:transform .1s linear;
 }
 
-/* Scroll track */
-.wheelTrack{
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: calc(10px + var(--safe-b));
-  height: 96px;
-  border-radius: 26px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(10,14,20,0.35);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 10px 36px rgba(0,0,0,0.50);
-  overflow: hidden;
-
-  display: flex;
-  align-items: center;
-
-  scroll-snap-type: x mandatory;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.wheelTrack::-webkit-scrollbar{ display:none; }
-
-.wheelTrackInnerPad{
-  flex: 0 0 calc((100% - var(--wheel-item)) / 2);
-  height: 1px;
-  scroll-snap-align: center;
-}
-
-.wheelItem{
-  flex: 0 0 var(--wheel-item);
-  height: 76px;
-  display: grid;
-  place-items: center;
-  scroll-snap-align: center;
-  opacity: 0.58;
-  transform: scale(0.96);
-  transition: opacity 120ms var(--ease), transform 120ms var(--ease), filter 120ms var(--ease);
-}
-.wheelItem.isActive{
-  opacity: 1;
-  transform: scale(1.02);
-  filter: drop-shadow(0 0 10px rgba(0,255,220,0.18));
-}
-.wheelItem img{
-  width: 34px;
-  height: 34px;
-  opacity: 0.95;
-}
-
-/* Center overlay */
-.wheelCenter{
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(20px + var(--safe-b));
-  width: 112px;
-  height: 76px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-.wheelCenterIcon{
-  width: 54px;
-  height: 54px;
-  border-radius: 999px;
-  border: 1px solid rgba(0,255,220,0.22);
-  background: rgba(0,255,220,0.07);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display: grid;
-  place-items: center;
-  box-shadow: 0 0 24px rgba(0,255,220,0.12);
-}
-.wheelCenterIcon img{
-  width: 30px;
-  height: 30px;
-}
-.wheelCenterLabel{
-  margin-top: 6px;
-  font-size: 11px;
-  letter-spacing: 0.2px;
-  color: rgba(255,255,255,0.70);
-}
-
-/* Tap overlay button */
-.wheelTap{
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: calc(10px + var(--safe-b));
-  height: 96px;
-  border-radius: 26px;
-  border: none;
-  background: transparent;
-}
-
-/* Generic UI */
-.card{
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(14,18,26,0.35);
-  border-radius: 18px;
-  padding: 14px;
-  margin-bottom: 12px;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-.cardTitle{
-  font-weight: 750;
-  letter-spacing: 0.2px;
-  font-size: 14px;
-  margin: 0 0 10px 0;
-}
-.muted{
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.35;
-}
-.row{
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: space-between;
-}
-.pill{
-  font-size: 11px;
-  color: rgba(0,255,220,0.86);
-  border: 1px solid rgba(0,255,220,0.20);
-  background: rgba(0,255,220,0.06);
-  padding: 6px 10px;
-  border-radius: 999px;
-}
-
-/* Inputs */
-.inputRow{
-  display: flex;
-  gap: 10px;
-}
-.textInput{
-  flex: 1;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.20);
-  color: rgba(255,255,255,0.92);
-  padding: 12px 12px;
-  font-size: 14px;
-  outline: none;
-}
-.textInput::placeholder{ color: rgba(255,255,255,0.35); }
-
-.btnPrimary{
-  border: 1px solid rgba(0,255,220,0.22);
-  background: rgba(0,255,220,0.12);
-  color: rgba(255,255,255,0.92);
-  padding: 12px 14px;
-  border-radius: 14px;
-  font-weight: 650;
-}
-.btnPrimary:active{ transform: scale(0.99); }
-
-.btnGhost{
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.90);
-  padding: 12px 14px;
-  border-radius: 14px;
-  font-weight: 650;
-}
-.btnGhost:active{ transform: scale(0.99); }
-
-/* List items + swipe */
-.list{
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.item{
-  position: relative;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(10,14,20,0.35);
-  overflow: hidden;
-}
-.itemBg{
-  position: absolute;
-  inset: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 14px;
-  font-size: 12px;
-  color: rgba(255,255,255,0.70);
-  pointer-events: none;
-}
-.itemBg .leftHint{ color: rgba(0,255,220,0.80); }
-.itemBg .rightHint{ color: rgba(255,140,120,0.80); }
-
-.itemFront{
-  position: relative;
-  padding: 14px 14px;
-  transform: translateX(0);
-  transition: transform 140ms var(--ease);
-  will-change: transform;
-}
-.itemText{
-  font-size: 14px;
-  line-height: 1.25;
-  color: rgba(255,255,255,0.90);
-}
-.itemMeta{
-  margin-top: 6px;
-  font-size: 11px;
-  color: rgba(255,255,255,0.48);
-}
-
-/* Calendar iframe */
-.calendarWrap{
-  position: relative;
-  border-radius: 18px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.20);
-}
-.calendarWrap iframe{
-  width: 100%;
-  height: 520px;
-  border: 0;
-  display: block;
-  filter: saturate(0.65) contrast(1.02) brightness(0.78);
-  opacity: 0.92;
-}
-.calendarOverlay{
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(5,7,11,0.70), rgba(5,7,11,0.25) 18%, rgba(5,7,11,0.35)),
-    radial-gradient(900px 520px at 50% 20%, rgba(0,255,220,0.08), transparent 55%);
-  mix-blend-mode: multiply;
-  opacity: 0.95;
-}
-
-/* Prio modal */
-.prioModal{
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: none;
-}
-.prioModal[aria-hidden="false"]{ display: block; }
-
-.prioModalBackdrop{
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.prioModalCard{
-  position: absolute;
-  left: 14px; right: 14px;
-  top: 18vh;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(14,18,26,0.70);
-  box-shadow: var(--shadowSoft);
-  padding: 14px;
-}
-
-.prioModalTitle{
-  font-weight: 800;
-  letter-spacing: 0.2px;
-  margin-bottom: 10px;
-}
-.prioInput{
-  width: 100%;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.20);
-  color: rgba(255,255,255,0.92);
-  padding: 12px;
-  font-size: 14px;
-  outline: none;
-  resize: none;
-}
-.prioModalActions{
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 12px;
-}
-
-/* Reduce motion */
-@media (prefers-reduced-motion: reduce){
-  .sheet, .wheelItem, .itemFront, .prioCard{ transition: none !important; }
+.wheelIcon{
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:80px;
+  height:80px;
+  transform:translate(-50%,-50%);
 }
