@@ -2,45 +2,74 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>SBScrowl</title>
-  <link rel="stylesheet" href="style.css?v=3">
+
+  <link rel="stylesheet" href="style.css?v=4" />
 </head>
+
 <body>
 
-  <!-- Top (minimal) -->
+  <!-- ================= HEADER ================= -->
   <header class="topbar">
     <div class="brand">
-      <span class="dot"></span>
-      <span class="brandText">SBScrowl</span>
+      <div class="brandDot"></div>
+      <span class="brandTitle">SBScrowl</span>
     </div>
-    <div class="preview" id="previewText">—</div>
+
+    <div class="previewText" id="previewText">
+      Preview: Weather
+    </div>
   </header>
 
-  <!-- Sheet (bottom) -->
+
+  <!-- ================= WHEEL ================= -->
+  <div class="wheelWrap">
+    <div class="wheel" id="wheel">
+      <img
+        src="assets/ui/knob-ring.svg"
+        class="wheelRing"
+        id="wheelRing"
+        alt="Wheel ring"
+      />
+
+      <img
+        src="assets/ui/icon-weather.svg"
+        class="wheelIcon"
+        id="wheelIcon"
+        alt="Wheel icon"
+      />
+    </div>
+  </div>
+
+
+  <!-- ================= SHEET (RUTAN) ================= -->
   <div class="sheet" id="sheet" aria-hidden="true">
-    <div class="sheetInner">
-      <div class="sheetHeader">
-        <div class="sheetTitle" id="sheetTitle">—</div>
-      </div>
+
+    <div class="sheetContent">
+
+      <h2 class="sheetTitle" id="sheetTitle">
+        Weather
+      </h2>
 
       <div class="sheetBody" id="sheetBody">
-        <!-- injected by JS -->
+        <!-- Här renderar vi Weather / News / Todo / Ideas osv -->
+        <p>Placeholder</p>
       </div>
 
-      <!-- Close button centered bottom edge -->
-      <button class="sheetClose" id="sheetClose" aria-label="Stäng">✕</button>
     </div>
+
+    <!-- Kryss längst ned -->
+    <button class="closeBtn" id="closeBtn" aria-label="Stäng">
+      ✕
+    </button>
+
   </div>
 
-  <!-- Wheel (always visible, behind/under sheet area) -->
-  <div class="wheelFixed" aria-label="Wheel">
-    <div class="wheel" id="wheel" role="button" aria-label="Scrollhjul">
-      <img class="wheelRing" id="wheelRing" src="assets/ui/knob-ring.svg" alt="">
-      <img class="wheelIcon" id="wheelIcon" src="assets/ui/icon-weather.svg" alt="">
-    </div>
-  </div>
 
-  <script src="app.js?v=3"></script>
+  <!-- ================= SCRIPT ================= -->
+  <script src="app.js?v=4"></script>
+
 </body>
 </html>
