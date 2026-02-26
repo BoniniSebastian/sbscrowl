@@ -233,3 +233,11 @@ body.isMenuMode .iconRail{
   .hero{ max-width: 520px; }
   .heroTrack{ padding: 0 14px; }
 }
+body.isMenuMode .knob{
+  transform: scale(1.25);
+  opacity: 1;
+}
+
+body.isMenuMode .knob img{
+  filter: drop-shadow(0 0 28px rgba(255,255,255,.18));
+}
