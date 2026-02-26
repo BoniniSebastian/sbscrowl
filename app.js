@@ -132,9 +132,33 @@
   });
 
   edgeRight.addEventListener("pointermove", (e) => {
-    if (!edgeActive) return;
+  if (!edgeActive) return;
 
-    const dx = e.clientX - edgeStartX; // åt vänster = negativt
-    const dy = e.clientY - edgeStartY;
+  const dx = e.clientX - edgeStartX; // åt vänster = negativt
+  const dy = e.clientY - edgeStartY;
 
-    if (Math.abs(dy) > EDGE_MAX_D
+  if (Math.abs(dy) > EDGE_MAX_DY) return;
+
+  if (!menuMode && dx < -EDGE_MIN_DX_OPEN){
+    enterMenuMode();
+    edgeActive = false;
+  } else if (menuMode && dx < -EDGE_MIN_DX_CLOSE){
+    exitMenuMode();
+    edgeActive = false;
+  }
+});
+
+edgeRight.addEventListener("pointerup", () => { edgeActive = false; });
+edgeRight.addEventListener("pointercancel", () => { edgeActive = false; });
+
+/* =========================
+   ICON CLICK (placeholder)
+========================= */
+iconItems.forEach((item) => {
+  item.addEventListener("click", () => {
+    iconItems.forEach(it => it.classList.remove("isActive"));
+    item.classList.add("isActive");
+  });
+});
+
+})();
