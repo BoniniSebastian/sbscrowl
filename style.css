@@ -1,13 +1,235 @@
-/* Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ============ RESET ============ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body { overflow: hidden; background: #000; }
+
+/* ============ BACKGROUND ============ */
+/* Spara din bild som: assets/ui/bg-main.jpg */
+body::before{
+  content:"";
+  position: fixed;
+  inset: 0;
+  background:
+    url("assets/ui/bg-main.jpg") center/cover no-repeat,
+    radial-gradient(120% 100% at 50% 0%, rgba(255,255,255,.06), rgba(0,0,0,0) 55%),
+    #000;
+  transform: translateZ(0);
+  z-index: -2;
+}
+body::after{
+  content:"";
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.62); /* svart lager med opacitet */
+  z-index: -1;
 }
 
-/* Full svart bakgrund */
-html, body {
+/* ============ APP SHELL ============ */
+.app{
+  position: relative;
+  height: 100%;
+  width: 100%;
+  padding:
+    max(14px, env(safe-area-inset-top))
+    max(14px, env(safe-area-inset-right))
+    max(14px, env(safe-area-inset-bottom))
+    max(14px, env(safe-area-inset-left));
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+/* ============ HERO / CAROUSEL ============ */
+.hero{
+  position: relative;
+  width: 100%;
+  height: 35vh;            /* ca 35% av ytan från ovankanten */
+  min-height: 260px;
+  max-height: 360px;
+  padding: 12px 0 0 0;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.heroTrack{
   width: 100%;
   height: 100%;
-  background: #000;
+  display: flex;
+  gap: 14px;
+  will-change: transform;
+  transition: transform 260ms ease;
+  padding: 0 10px; /* lite luft i kanterna */
+}
+
+.heroCard{
+  flex: 0 0 calc(100% - 20px);
+  height: calc(35vh - 42px);
+  min-height: 220px;
+  max-height: 320px;
+
+  border-radius: 22px;
+  background: rgba(20,20,20,.30);
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.06);
+
+  position: relative;
+  overflow: hidden;
+}
+
+/* “lite ljusare när man gör swipen” */
+.hero.isSwiping .heroCard{
+  background: rgba(30,30,30,.40);
+  border-color: rgba(255,255,255,.18);
+}
+
+/* Nummer i korten (tillfälligt) */
+.heroNum{
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(255,255,255,.86);
+  font-size: clamp(44px, 10vw, 72px);
+  font-weight: 700;
+  letter-spacing: .02em;
+  user-select: none;
+}
+
+/* Dots */
+.dots{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 2px;
+}
+.dot{
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.58);
+  transition: transform 180ms ease, background 180ms ease, opacity 180ms ease;
+  opacity: .9;
+}
+.dot.isActive{
+  background: rgba(255,255,255,.92);
+  transform: scale(1.35); /* lite större */
+  opacity: 1;
+}
+
+/* När vi går in i “wheel mode” ska startsektionerna döljas */
+body.isMenuMode .hero{
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+}
+
+/* ============ ICON RAIL (right) ============ */
+.iconRail{
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  height: calc(100% - 120px);
+  width: 56px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-start;
+
+  opacity: 0;
+  transform: translateX(10px);
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+body.isMenuMode .iconRail{
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.iconItem{
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+
+  background: rgba(18,18,18,.28);
+  border: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  color: rgba(255,255,255,.78);
+  font-weight: 700;
+  user-select: none;
+
+  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease, opacity 140ms ease;
+}
+
+.iconItem.isActive{
+  transform: scale(1.06);
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.22);
+  color: rgba(255,255,255,.92);
+}
+
+/* ============ KNOB (bottom-left) ============ */
+.knob{
+  position: absolute;
+  left: max(10px, env(safe-area-inset-left));
+  bottom: max(10px, env(safe-area-inset-bottom));
+  width: 92px;
+  height: 92px;
+
+  border: 0;
+  background: transparent;
+  padding: 0;
+  border-radius: 999px;
+
+  display: grid;
+  place-items: center;
+
+  opacity: .22;                 /* “blir synliggare om man nuddar den” */
+  transform: translateZ(0);
+  transition: opacity 220ms ease, transform 220ms ease;
+  touch-action: none; /* viktigt för egen rotation/gest */
+}
+
+.knob img{
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  transform: rotate(0deg);
+  transition: transform 40ms linear;
+  filter: drop-shadow(0 0 18px rgba(255,255,255,.08));
+}
+
+.knob.isActive{
+  opacity: .92;
+}
+
+/* “pulserar lite lätt men avtar om man inte nuddar” */
+@keyframes knobPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+.knob.isPulsing{
+  animation: knobPulse 1.1s ease-in-out infinite;
+}
+
+/* Lite bättre känsla på iPhone */
+@media (min-width: 768px){
+  .hero{ max-width: 520px; }
+  .heroTrack{ padding: 0 14px; }
 }
