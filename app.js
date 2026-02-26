@@ -1,167 +1,293 @@
 (() => {
 
-  console.log("LOADED ✅");
-  
-  const hero = document.getElementById("hero");
-  const heroTrack = document.getElementById("heroTrack");
-  const dots = Array.from(document.querySelectorAll(".dot"));
-  const edgeRight = document.getElementById("edgeRight");
-  const iconRail = document.getElementById("iconRail");
-  const iconItems = Array.from(iconRail.querySelectorAll(".iconItem"));
+  console.log("SB Dash v1 loaded ✅");
 
-  /* =========================
-     HERO SWIPE (1/2/3)
-  ========================= */
-  const PAGES = 3;
-  let page = 0;
-  let isSwiping = false;
+  const $ = (id) => document.getElementById(id);
+
+  /* ===============================
+     Stable viewport height (iOS fix)
+  =============================== */
+  function setVH(){
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty("--vh", `${vh}px`);
+  }
+  setVH();
+  window.addEventListener("resize", setVH);
+
+  /* ===============================
+     Elements
+  =============================== */
+  const viewport = $("carouselViewport");
+  const track = $("carouselTrack");
+  const tripDotsWrap = $("tripDots");
+  const tripDots = Array.from(tripDotsWrap.querySelectorAll(".tDot"));
+
+  const edgeZone = $("edgeZone");
+  const edgeSelector = $("edgeSelector");
+  const edgeDotsWrap = $("edgeDots");
+  const edgePicker = $("edgePicker");
+  const edgeBackdrop = $("edgeBackdrop");
+
+  const dateWeekday = $("dateWeekday");
+  const dateDayMonth = $("dateDayMonth");
+
+  const SLIDE_COUNT = 9;
+
+  /* ===============================
+     Date (auto Swedish)
+  =============================== */
+  function capFirst(str){
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  function renderDate(){
+    const now = new Date();
+
+    const weekday = capFirst(
+      new Intl.DateTimeFormat("sv-SE", { weekday: "long" }).format(now)
+    );
+
+    const day = new Intl.DateTimeFormat("sv-SE", { day: "numeric" }).format(now);
+
+    const month = capFirst(
+      new Intl.DateTimeFormat("sv-SE", { month: "long" }).format(now)
+    );
+
+    dateWeekday.textContent = weekday;
+    dateDayMonth.textContent = `${day} ${month}`;
+  }
+
+  renderDate();
+  setInterval(renderDate, 60000);
+
+  /* ===============================
+     Carousel State
+  =============================== */
+  let index = 0;
+
+  function clamp(v, min, max){
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function getWidth(){
+    return viewport.getBoundingClientRect().width || 1;
+  }
+
+  function updateTripDots(i){
+    const group = Math.floor(i / 3);
+    tripDots.forEach((d, idx) =>
+      d.classList.toggle("isActive", idx === group)
+    );
+  }
+
+  function snapTo(i, animate = true){
+    index = clamp(i, 0, SLIDE_COUNT - 1);
+
+    const w = getWidth();
+    const x = -index * w;
+
+    if(animate){
+      track.style.transition = "transform 240ms cubic-bezier(.2,.9,.2,1)";
+      viewport.style.transition = "opacity 180ms ease";
+    } else {
+      track.style.transition = "";
+      viewport.style.transition = "";
+    }
+
+    track.style.transform = `translate3d(${x}px,0,0)`;
+    viewport.style.opacity = "1";
+
+    if(animate){
+      setTimeout(() => {
+        track.style.transition = "";
+        viewport.style.transition = "";
+      }, 260);
+    }
+
+    updateTripDots(index);
+  }
+
+  /* ===============================
+     Horizontal Swipe
+  =============================== */
+  let dragging = false;
   let startX = 0;
-  let startY = 0;
-  let startTX = 0;
-  let currentTX = 0;
+  let dx = 0;
+  let pointerId = null;
 
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  viewport.addEventListener("pointerdown", (e) => {
 
-  function setPage(newPage){
-    page = clamp(newPage, 0, PAGES - 1);
-    currentTX = -page * hero.clientWidth;
-    heroTrack.style.transform = `translateX(${currentTX}px)`;
-    dots.forEach((d, i) => d.classList.toggle("isActive", i === page));
-  }
+    if(document.body.classList.contains("edgeActive")) return;
 
-  function setSwipingState(on){
-    isSwiping = on;
-    hero.classList.toggle("isSwiping", on);
-  }
-
-  function relayout(){
-    currentTX = -page * hero.clientWidth;
-    heroTrack.style.transform = `translateX(${currentTX}px)`;
-  }
-  window.addEventListener("resize", relayout);
-  setPage(0);
-
-  hero.addEventListener("pointerdown", (e) => {
-    if (document.body.classList.contains("isMenuMode")) return;
-
-    setSwipingState(true);
-    hero.setPointerCapture(e.pointerId);
-
+    dragging = true;
+    pointerId = e.pointerId;
     startX = e.clientX;
-    startY = e.clientY;
-    startTX = -page * hero.clientWidth;
-    currentTX = startTX;
+    dx = 0;
+
+    viewport.setPointerCapture(pointerId);
+    track.style.transition = "";
   });
 
-  hero.addEventListener("pointermove", (e) => {
-    if (!isSwiping || document.body.classList.contains("isMenuMode")) return;
+  viewport.addEventListener("pointermove", (e) => {
 
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
+    if(!dragging || e.pointerId !== pointerId) return;
 
-    if (Math.abs(dy) > Math.abs(dx) * 1.2) return;
+    dx = e.clientX - startX;
 
-    const maxLeft = 0;
-    const maxRight = -(PAGES - 1) * hero.clientWidth;
-    let next = startTX + dx;
+    if((index === 0 && dx > 0) ||
+       (index === SLIDE_COUNT - 1 && dx < 0)){
+      dx *= 0.35;
+    }
 
-    if (next > maxLeft) next = maxLeft + (next - maxLeft) * 0.25;
-    if (next < maxRight) next = maxRight + (next - maxRight) * 0.25;
+    const w = getWidth();
+    const x = (-index * w) + dx;
+    track.style.transform = `translate3d(${x}px,0,0)`;
 
-    currentTX = next;
-    heroTrack.style.transition = "none";
-    heroTrack.style.transform = `translateX(${currentTX}px)`;
+    const p = Math.min(1, Math.abs(dx) / w);
+    viewport.style.opacity = 1 - 0.28 * p;
   });
 
-  function endHeroSwipe(e){
-    if (!isSwiping || document.body.classList.contains("isMenuMode")) return;
+  function endDrag(){
+    if(!dragging) return;
+    dragging = false;
 
-    setSwipingState(false);
-    heroTrack.style.transition = "transform 260ms ease";
+    const w = getWidth();
+    const p = Math.abs(dx) / w;
 
-    const dx = e.clientX - startX;
-    const threshold = hero.clientWidth * 0.18;
+    let next = index;
+    if(p > 0.18){
+      next = dx < 0 ? index + 1 : index - 1;
+    }
 
-    if (dx <= -threshold) setPage(page + 1);
-    else if (dx >= threshold) setPage(page - 1);
-    else setPage(page);
+    snapTo(next, true);
+
+    dx = 0;
+    pointerId = null;
   }
 
-  hero.addEventListener("pointerup", endHeroSwipe);
-  hero.addEventListener("pointercancel", endHeroSwipe);
+  viewport.addEventListener("pointerup", endDrag);
+  viewport.addEventListener("pointercancel", endDrag);
 
-  dots.forEach((d) => {
-    d.addEventListener("click", () => {
-      if (document.body.classList.contains("isMenuMode")) return;
-      const i = Number(d.dataset.dot);
-      setPage(i);
+  window.addEventListener("resize", () => snapTo(index, false));
+
+  /* ===============================
+     Edge Selector
+  =============================== */
+
+  const edgeDots = [];
+
+  for(let i = 0; i < SLIDE_COUNT; i++){
+    const dot = document.createElement("div");
+    dot.className = "edgeDot";
+    edgeDotsWrap.appendChild(dot);
+    edgeDots.push(dot);
+  }
+
+  function getDotCenters(){
+    return edgeDots.map(d => {
+      const r = d.getBoundingClientRect();
+      return r.top + r.height / 2;
     });
-  });
-
-  /* =========================
-     MENU MODE (EDGE SWIPE RIGHT)
-  ========================= */
-  let menuMode = false;
-
-  function enterMenuMode(){
-    if (menuMode) return;
-    menuMode = true;
-    document.body.classList.add("isMenuMode");
   }
 
-  function exitMenuMode(){
-    if (!menuMode) return;
-    menuMode = false;
-    document.body.classList.remove("isMenuMode");
+  function movePickerToIndex(i){
+    const centers = getDotCenters();
+    const y = centers[i] || window.innerHeight / 2;
+
+    edgePicker.style.transform =
+      `translate3d(0, ${y - window.innerHeight / 2}px, 0) translateY(-50%)`;
   }
 
-  // Edge-swipe state
+  let edgeTracking = false;
   let edgeActive = false;
   let edgeStartX = 0;
-  let edgeStartY = 0;
-  let edgeStartTs = 0;
+  let edgePointer = null;
+  let candidateIndex = 0;
 
-  // Vi kräver tydlig horisontell gesture och lite "fart"
-  const EDGE_MIN_DX_OPEN = 32;   // swipe in från höger: dra åt vänster (dx negativ)
-  const EDGE_MIN_DX_CLOSE = 28;  // close också åt vänster
-  const EDGE_MAX_DY = 40;
+  const EDGE_THRESHOLD = 22;
+  const EDGE_PULL_MAX = 110;
 
-  edgeRight.addEventListener("pointerdown", (e) => {
+  function openEdge(){
     edgeActive = true;
-    edgeRight.setPointerCapture(e.pointerId);
-    edgeStartX = e.clientX;
-    edgeStartY = e.clientY;
-    edgeStartTs = performance.now();
-  });
-
-  edgeRight.addEventListener("pointermove", (e) => {
-  if (!edgeActive) return;
-
-  const dx = e.clientX - edgeStartX; // åt vänster = negativt
-  const dy = e.clientY - edgeStartY;
-
-  if (Math.abs(dy) > EDGE_MAX_DY) return;
-
-  if (!menuMode && dx < -EDGE_MIN_DX_OPEN){
-    enterMenuMode();
-    edgeActive = false;
-  } else if (menuMode && dx < -EDGE_MIN_DX_CLOSE){
-    exitMenuMode();
-    edgeActive = false;
+    document.body.classList.add("edgeActive");
+    edgePicker.style.opacity = "1";
+    movePickerToIndex(index);
   }
-});
 
-edgeRight.addEventListener("pointerup", () => { edgeActive = false; });
-edgeRight.addEventListener("pointercancel", () => { edgeActive = false; });
+  function closeEdge(){
+    edgeActive = false;
+    document.body.classList.remove("edgeActive");
+    edgeSelector.style.transform = "translate3d(-100%,0,0)";
+    edgeSelector.style.opacity = "0";
+    edgePicker.style.opacity = "0";
+  }
 
-/* =========================
-   ICON CLICK (placeholder)
-========================= */
-iconItems.forEach((item) => {
-  item.addEventListener("click", () => {
-    iconItems.forEach(it => it.classList.remove("isActive"));
-    item.classList.add("isActive");
+  function setEdgePull(px){
+    const p = clamp(px, 0, EDGE_PULL_MAX);
+    const percent = -100 + (p / EDGE_PULL_MAX) * 92;
+    edgeSelector.style.transform = `translate3d(${percent}%,0,0)`;
+    edgeSelector.style.opacity = "1";
+  }
+
+  edgeZone.addEventListener("pointerdown", (e) => {
+    edgeTracking = true;
+    edgePointer = e.pointerId;
+    edgeStartX = e.clientX;
+    edgeZone.setPointerCapture(edgePointer);
   });
-});
+
+  edgeZone.addEventListener("pointermove", (e) => {
+
+    if(!edgeTracking || e.pointerId !== edgePointer) return;
+
+    const pull = e.clientX - edgeStartX;
+
+    if(!edgeActive){
+      if(pull > EDGE_THRESHOLD){
+        openEdge();
+      } else {
+        return;
+      }
+    }
+
+    setEdgePull(pull);
+
+    const centers = getDotCenters();
+    let best = 0;
+    let bestDist = Infinity;
+
+    centers.forEach((c, i) => {
+      const d = Math.abs(c - e.clientY);
+      if(d < bestDist){
+        bestDist = d;
+        best = i;
+      }
+    });
+
+    candidateIndex = best;
+    movePickerToIndex(best);
+  });
+
+  function endEdge(commit){
+    if(!edgeTracking) return;
+
+    edgeTracking = false;
+
+    if(edgeActive && commit){
+      snapTo(candidateIndex, true);
+    }
+
+    closeEdge();
+  }
+
+  edgeZone.addEventListener("pointerup", () => endEdge(true));
+  edgeZone.addEventListener("pointercancel", () => endEdge(false));
+
+  edgeBackdrop.addEventListener("click", closeEdge);
+
+  /* ===============================
+     Init
+  =============================== */
+  snapTo(0, false);
 
 })();
