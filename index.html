@@ -2,74 +2,18 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>SBScrowl</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebApp</title>
 
-  <link rel="stylesheet" href="style.css?v=4" />
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
-  <!-- ================= HEADER ================= -->
-  <header class="topbar">
-    <div class="brand">
-      <div class="brandDot"></div>
-      <span class="brandTitle">SBScrowl</span>
-    </div>
+  <!-- Tom app-container -->
+  <div id="app"></div>
 
-    <div class="previewText" id="previewText">
-      Preview: Weather
-    </div>
-  </header>
-
-
-  <!-- ================= WHEEL ================= -->
-  <div class="wheelWrap">
-    <div class="wheel" id="wheel">
-      <img
-        src="assets/ui/knob-ring.svg"
-        class="wheelRing"
-        id="wheelRing"
-        alt="Wheel ring"
-      />
-
-      <img
-        src="assets/ui/icon-weather.svg"
-        class="wheelIcon"
-        id="wheelIcon"
-        alt="Wheel icon"
-      />
-    </div>
-  </div>
-
-
-  <!-- ================= SHEET (RUTAN) ================= -->
-  <div class="sheet" id="sheet" aria-hidden="true">
-
-    <div class="sheetContent">
-
-      <h2 class="sheetTitle" id="sheetTitle">
-        Weather
-      </h2>
-
-      <div class="sheetBody" id="sheetBody">
-        <!-- Här renderar vi Weather / News / Todo / Ideas osv -->
-        <p>Placeholder</p>
-      </div>
-
-    </div>
-
-    <!-- Kryss längst ned -->
-    <button class="closeBtn" id="closeBtn" aria-label="Stäng">
-      ✕
-    </button>
-
-  </div>
-
-
-  <!-- ================= SCRIPT ================= -->
-  <script src="app.js?v=4"></script>
-
+  <!-- JS -->
+  <script src="app.js"></script>
 </body>
 </html>
