@@ -1,246 +1,351 @@
-:root{
-  --safeTop: env(safe-area-inset-top, 0px);
-  --safeBot: env(safe-area-inset-bottom, 0px);
-  --safeL: env(safe-area-inset-left, 0px);
-  --safeR: env(safe-area-inset-right, 0px);
+(() => {
+  const $ = (id) => document.getElementById(id);
 
-  --vh: 1vh; /* JS sets stable vh */
-  --bgA: #07090d;
-  --bgB: #04050a;
+  /* =========================
+     Stable viewport height (iOS)
+  ========================= */
+  function setVH(){
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty("--vh", `${vh}px`);
+  }
+  setVH();
+  window.addEventListener("resize", setVH, { passive: true });
 
-  --text: rgba(255,255,255,.96);
-  --muted: rgba(255,255,255,.55);
+  /* =========================
+     Elements
+  ========================= */
+  const viewport = $("carouselViewport");
+  const track = $("carouselTrack");
+  const tripDotsWrap = $("tripDots");
+  const tripDots = Array.from(tripDotsWrap.querySelectorAll(".tDot"));
 
-  --dot: rgba(255,255,255,.35);
-  --dotOn: rgba(255,255,255,.95);
+  const edgeZone = $("edgeZone");
+  const edgeSelector = $("edgeSelector");
+  const edgeDotsWrap = $("edgeDots");
+  const edgePicker = $("edgePicker");
+  const edgeBackdrop = $("edgeBackdrop");
 
-  --turq: #19f6ff;
-  --turqGlow: rgba(25,246,255,.18);
+  const dateWeekday = $("dateWeekday");
+  const dateDayMonth = $("dateDayMonth");
 
-  --panelGlass: rgba(10,12,18,.22);
-  --panelBorder: rgba(255,255,255,.10);
-}
+  const SLIDE_COUNT = 9;
 
-*{ box-sizing: border-box; }
-html,body{ height:100%; }
-body{
-  margin:0;
-  color: var(--text);
-  background: #000;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-  overscroll-behavior: none;
-}
+  /* =========================
+     Date (auto, sv-SE)
+  ========================= */
+  function capFirst(s){
+    if(!s) return s;
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  function renderDate(){
+    const d = new Date();
+    const weekday = capFirst(new Intl.DateTimeFormat("sv-SE", { weekday: "long" }).format(d));
+    const day = new Intl.DateTimeFormat("sv-SE", { day: "numeric" }).format(d);
+    const month = capFirst(new Intl.DateTimeFormat("sv-SE", { month: "long" }).format(d));
+    dateWeekday.textContent = weekday;
+    dateDayMonth.textContent = `${day} ${month}`;
+  }
+  renderDate();
+  // update shortly after midnight as well
+  setInterval(renderDate, 60_000);
 
-/* Background */
-.bg{
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(1200px 800px at 70% 10%, rgba(40,140,255,.08), transparent 60%),
-    radial-gradient(900px 600px at 20% 80%, rgba(25,246,255,.06), transparent 55%),
-    linear-gradient(180deg, var(--bgA), var(--bgB));
-  z-index: 0;
-}
+  /* =========================
+     State
+  ========================= */
+  let index = 0;
 
-/* App shell */
-.app{
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: calc(var(--vh) * 100);
-  padding-left: calc(12px + var(--safeL));
-  padding-right: calc(12px + var(--safeR));
-  padding-top: calc(12px + var(--safeTop));
-  padding-bottom: calc(12px + var(--safeBot));
-}
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
 
-/* Carousel */
-.carouselViewport{
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  touch-action: pan-y; /* we handle horizontal drag */
-  user-select: none;
-}
-.carouselTrack{
-  display: flex;
-  height: 100%;
-  will-change: transform;
-  transform: translate3d(0,0,0);
-}
-.slide{
-  flex: 0 0 100%;
-  width: 100%;
-  height: 100%;
-}
-.slideInner{
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
+  function getWidth(){
+    return viewport.getBoundingClientRect().width || 1;
+  }
 
-/* Slide 1: brutalist date */
-.dateBlock{
-  position: absolute;
-  top: calc(16px + var(--safeTop));
-  right: calc(12px + var(--safeR));
-  text-align: right;
-  line-height: 1.0;
-  letter-spacing: -0.02em;
-  font-weight: 900;
-  text-transform: none;
-  font-size: clamp(34px, 6.2vw, 54px);
-  text-shadow: 0 0 18px rgba(255,255,255,.06);
-}
-.dateLine{
-  margin: 0;
-  padding: 0;
-}
+  function setTripDots(i){
+    // 3 dots represent groups of 3 slides: 0-2, 3-5, 6-8
+    const group = Math.floor(i / 3);
+    tripDots.forEach((d, idx) => d.classList.toggle("isActive", idx === group));
+  }
 
-/* Placeholder slides */
-.placeholder{
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  text-align: center;
-  opacity: .9;
-}
-.phTitle{
-  font-weight: 800;
-  letter-spacing: .02em;
-  font-size: clamp(22px, 4.2vw, 34px);
-}
-.phSub{
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--muted);
-}
+  function snapTo(i, animate = true){
+    index = clamp(i, 0, SLIDE_COUNT - 1);
+    const w = getWidth();
+    const x = -index * w;
 
-/* 3 dots always visible (group indicator) */
-.tripDots{
-  position: absolute;
-  left: 50%;
-  bottom: calc(14px + var(--safeBot));
-  transform: translateX(-50%);
-  display: flex;
-  gap: 10px;
-  z-index: 10;
-  pointer-events: none;
-}
-.tDot{
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--dot);
-  opacity: .9;
-}
-.tDot.isActive{
-  background: var(--dotOn);
-}
+    if(animate){
+      track.style.transition = "transform 240ms cubic-bezier(.2,.9,.2,1)";
+      viewport.style.transition = "opacity 180ms ease";
+    }else{
+      track.style.transition = "";
+      viewport.style.transition = "";
+    }
 
-/* Edge hot zone */
-.edgeZone{
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: calc(26px + var(--safeL));
-  height: 100%;
-  z-index: 40;
-  background: transparent;
-}
+    track.style.transform = `translate3d(${x}px,0,0)`;
+    viewport.style.opacity = "1";
 
-/* Edge selector */
-.edgeSelector{
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: min(78vw, 340px);
-  padding-top: calc(22px + var(--safeTop));
-  padding-bottom: calc(22px + var(--safeBot));
-  padding-left: calc(14px + var(--safeL));
-  padding-right: 14px;
+    // cleanup transition after
+    if(animate){
+      window.setTimeout(() => {
+        track.style.transition = "";
+        viewport.style.transition = "";
+      }, 260);
+    }
 
-  display: grid;
-  align-content: center;
-  justify-items: start;
-  gap: 18px;
+    setTripDots(index);
+    updateEdgePickerToIndex(index, true);
+  }
 
-  /* glass */
-  background: var(--panelGlass);
-  border-right: 1px solid var(--panelBorder);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  /* =========================
+     Carousel swipe (pointer events)
+  ========================= */
+  let dragging = false;
+  let startX = 0;
+  let dx = 0;
+  let pointerId = null;
 
-  z-index: 60;
+  function setDragTransform(dxNow){
+    const w = getWidth();
+    const x = (-index * w) + dxNow;
+    track.style.transform = `translate3d(${x}px,0,0)`;
 
-  transform: translate3d(-100%,0,0);
-  opacity: 0;
-  pointer-events: none;
+    // fade whole screen slightly while dragging (premium)
+    const p = Math.min(1, Math.abs(dxNow) / w);
+    viewport.style.opacity = String(1 - 0.28 * p); // 1 -> 0.72 max
+  }
 
-  will-change: transform, opacity;
-}
+  viewport.addEventListener("pointerdown", (e) => {
+    // if edge selector is active, ignore carousel drag
+    if(document.body.classList.contains("edgeActive")) return;
 
-/* Backdrop */
-.edgeBackdrop{
-  position: fixed;
-  inset: 0;
-  z-index: 55;
-  background: rgba(0,0,0,.35);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 180ms ease;
-}
+    dragging = true;
+    pointerId = e.pointerId;
+    startX = e.clientX;
+    dx = 0;
 
-/* Dots column */
-.edgeDots{
-  position: relative;
-  display: grid;
-  gap: 16px;
-  padding-left: 10px; /* breathing room from panel edge */
-}
-.edgeDot{
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.82);
-  opacity: .55;
-}
+    viewport.setPointerCapture(pointerId);
+    track.style.transition = "";
+    viewport.style.transition = "";
+  });
 
-/* Turquoise picker (filled) */
-.edgePicker{
-  position: absolute;
-  left: calc(14px + var(--safeL) + 0px);
-  top: 50%;
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
+  viewport.addEventListener("pointermove", (e) => {
+    if(!dragging || e.pointerId !== pointerId) return;
 
-  background: var(--turq);
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.06) inset,
-    0 0 16px var(--turqGlow),
-    0 0 28px rgba(25,246,255,.10);
+    dx = e.clientX - startX;
 
-  transform: translate3d(0,-50%,0);
-  opacity: 0;
-  will-change: transform, opacity;
-}
+    // resistance at ends
+    if((index === 0 && dx > 0) || (index === SLIDE_COUNT - 1 && dx < 0)){
+      dx *= 0.35;
+    }
 
-/* Active/open states driven by JS (we keep it simple) */
-body.edgeActive .edgeBackdrop{
-  opacity: 1;
-  pointer-events: auto;
-}
+    setDragTransform(dx);
+  });
 
-body.edgeActive .edgeSelector{
-  opacity: 1;
-  pointer-events: auto;
-}
+  function endDrag(){
+    if(!dragging) return;
+    dragging = false;
 
-/* Reduce motion */
-@media (prefers-reduced-motion: reduce){
-  .edgeBackdrop{ transition: none; }
-}
+    const w = getWidth();
+    const p = Math.abs(dx) / w;
+
+    let next = index;
+    if(p > 0.18){
+      next = dx < 0 ? index + 1 : index - 1;
+    }
+    snapTo(next, true);
+
+    dx = 0;
+    pointerId = null;
+  }
+
+  viewport.addEventListener("pointerup", (e) => {
+    if(e.pointerId !== pointerId) return;
+    endDrag();
+  });
+
+  viewport.addEventListener("pointercancel", (e) => {
+    if(e.pointerId !== pointerId) return;
+    endDrag();
+  });
+
+  // Keep position correct on resize/orientation change
+  window.addEventListener("resize", () => snapTo(index, false), { passive: true });
+
+  /* =========================
+     Edge selector (rubber band) – design locked:
+     - only appears during edge swipe
+     - threshold to activate
+     - 9 dots + turquoise filled picker
+     - same index system as carousel
+  ========================= */
+  // render 9 dots
+  const edgeDots = [];
+  for(let i=0;i<SLIDE_COUNT;i++){
+    const d = document.createElement("div");
+    d.className = "edgeDot";
+    edgeDotsWrap.appendChild(d);
+    edgeDots.push(d);
+  }
+
+  function getEdgeDotsGeometry(){
+    const rects = edgeDots.map(d => d.getBoundingClientRect());
+    const centersY = rects.map(r => r.top + r.height/2);
+    const minY = Math.min(...centersY);
+    const maxY = Math.max(...centersY);
+    return { centersY, minY, maxY };
+  }
+
+  function updateEdgePickerToIndex(i, animate){
+    const { centersY } = getEdgeDotsGeometry();
+    const targetY = centersY[clamp(i,0,SLIDE_COUNT-1)] || (window.innerHeight/2);
+
+    if(animate){
+      edgePicker.style.transition = "transform 220ms cubic-bezier(.2,.9,.2,1), opacity 180ms ease";
+    }else{
+      edgePicker.style.transition = "";
+    }
+
+    // edgePicker uses translateY in px, anchored from top via absolute positioning trick:
+    // We’ll position it via transform relative to viewport top by setting it as fixed-ish:
+    // easiest: put it in fixed coords using translate3d(0, Ypx, 0) minus half.
+    edgePicker.style.transform = `translate3d(0, ${targetY - (window.innerHeight/2)}px, 0) translate3d(0,-50%,0)`;
+
+    if(animate){
+      window.setTimeout(()=> edgePicker.style.transition = "", 240);
+    }
+  }
+
+  function setEdgePickerY(clientY){
+    const { centersY, minY, maxY } = getEdgeDotsGeometry();
+    const y = clamp(clientY, minY, maxY);
+
+    // move picker to y (relative to screen center, as above)
+    edgePicker.style.transform = `translate3d(0, ${y - (window.innerHeight/2)}px, 0) translate3d(0,-50%,0)`;
+
+    // choose nearest dot
+    let bestI = 0;
+    let bestD = Infinity;
+    for(let i=0;i<centersY.length;i++){
+      const d = Math.abs(centersY[i] - y);
+      if(d < bestD){ bestD = d; bestI = i; }
+    }
+    return bestI;
+  }
+
+  // Edge gesture state
+  let edgeTracking = false;
+  let edgeActive = false;
+  let edgeStartX = 0;
+  let edgePointerId = null;
+  let edgeCandidateIndex = 0;
+
+  const EDGE_THRESHOLD = 22; // px into the screen before activation
+  const EDGE_MAX_PULL = 110; // how far panel follows finger (rubber)
+
+  function openEdgeUI(){
+    edgeActive = true;
+    document.body.classList.add("edgeActive");
+
+    // start hidden then fade in
+    edgeSelector.style.transition = "transform 220ms cubic-bezier(.2,.9,.2,1), opacity 180ms ease";
+    edgePicker.style.opacity = "1";
+    edgePicker.style.transition = "opacity 180ms ease";
+
+    // initial position: slightly off-screen, will be pulled in by finger
+    edgeSelector.style.transform = "translate3d(-88%,0,0)";
+    edgeSelector.style.opacity = "1";
+  }
+
+  function closeEdgeUI(){
+    edgeActive = false;
+    document.body.classList.remove("edgeActive");
+
+    edgeSelector.style.transition = "transform 180ms ease, opacity 160ms ease";
+    edgeSelector.style.transform = "translate3d(-100%,0,0)";
+    edgeSelector.style.opacity = "0";
+
+    edgePicker.style.transition = "opacity 140ms ease";
+    edgePicker.style.opacity = "0";
+
+    window.setTimeout(() => {
+      edgeSelector.style.transition = "";
+      edgePicker.style.transition = "";
+    }, 220);
+  }
+
+  function setEdgePull(px){
+    // rubber band: pull in from left based on px (0..EDGE_MAX_PULL)
+    const p = clamp(px, 0, EDGE_MAX_PULL);
+    const t = -100 + (p / EDGE_MAX_PULL) * 100; // -100% -> 0%
+    // We don't go all the way to 0; keep it subtle
+    const eased = -100 + (p / EDGE_MAX_PULL) * 92; // -100 -> -8
+    edgeSelector.style.transform = `translate3d(${eased}%,0,0)`;
+    edgeSelector.style.opacity = "1";
+  }
+
+  // start tracking on edge zone only
+  edgeZone.addEventListener("pointerdown", (e) => {
+    if(edgeTracking) return;
+    edgeTracking = true;
+    edgePointerId = e.pointerId;
+    edgeStartX = e.clientX;
+    edgeCandidateIndex = index;
+
+    edgeZone.setPointerCapture(edgePointerId);
+  });
+
+  edgeZone.addEventListener("pointermove", (e) => {
+    if(!edgeTracking || e.pointerId !== edgePointerId) return;
+
+    const pull = e.clientX - edgeStartX;
+
+    // not activated yet: wait for threshold
+    if(!edgeActive){
+      if(pull > EDGE_THRESHOLD){
+        openEdgeUI();
+        // align picker to current slide
+        updateEdgePickerToIndex(index, false);
+      }else{
+        return;
+      }
+    }
+
+    // active: follow finger
+    setEdgePull(pull);
+
+    // move picker vertically with finger
+    edgeCandidateIndex = setEdgePickerY(e.clientY);
+  });
+
+  function endEdgeGesture(commit){
+    if(!edgeTracking) return;
+    edgeTracking = false;
+
+    if(edgeActive){
+      if(commit){
+        snapTo(edgeCandidateIndex, true);
+      }
+      closeEdgeUI();
+    }
+
+    edgePointerId = null;
+  }
+
+  edgeZone.addEventListener("pointerup", (e) => {
+    if(e.pointerId !== edgePointerId) return;
+    endEdgeGesture(true);
+  });
+
+  edgeZone.addEventListener("pointercancel", (e) => {
+    if(e.pointerId !== edgePointerId) return;
+    endEdgeGesture(false);
+  });
+
+  // Tap on backdrop closes edge selector (no commit)
+  edgeBackdrop.addEventListener("click", () => {
+    if(edgeActive) closeEdgeUI();
+  });
+
+  /* =========================
+     Init
+  ========================= */
+  snapTo(0, false);
+})();
