@@ -2,18 +2,49 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>WebApp</title>
-
-  <!-- CSS -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <main class="app" id="app" aria-label="App">
 
-  <!-- Tom app-container -->
-  <div id="app"></div>
+    <!-- START / HERO CAROUSEL -->
+    <section class="hero" id="hero" aria-label="Startsektioner">
+      <div class="heroTrack" id="heroTrack">
+        <article class="heroCard" data-index="0"><div class="heroNum">1</div></article>
+        <article class="heroCard" data-index="1"><div class="heroNum">2</div></article>
+        <article class="heroCard" data-index="2"><div class="heroNum">3</div></article>
+      </div>
 
-  <!-- JS -->
+      <div class="dots" id="dots" aria-label="Sidor">
+        <span class="dot isActive" data-dot="0"></span>
+        <span class="dot" data-dot="1"></span>
+        <span class="dot" data-dot="2"></span>
+      </div>
+    </section>
+
+    <!-- RIGHT ICON RAIL (hidden until wheel rotates) -->
+    <aside class="iconRail" id="iconRail" aria-label="Ikoner">
+      <div class="iconItem isActive" data-icon="1">1</div>
+      <div class="iconItem" data-icon="2">2</div>
+      <div class="iconItem" data-icon="3">3</div>
+      <div class="iconItem" data-icon="4">4</div>
+      <div class="iconItem" data-icon="5">5</div>
+      <div class="iconItem" data-icon="6">6</div>
+      <div class="iconItem" data-icon="7">7</div>
+      <div class="iconItem" data-icon="8">8</div>
+      <div class="iconItem" data-icon="9">9</div>
+      <div class="iconItem" data-icon="10">10</div>
+    </aside>
+
+    <!-- KNOB (bottom-left) -->
+    <button class="knob" id="knob" aria-label="Scrollhjul" type="button">
+      <img src="assets/ui/knob-ring.svg" alt="" draggable="false" />
+    </button>
+
+  </main>
+
   <script src="app.js"></script>
 </body>
 </html>
