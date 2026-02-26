@@ -49,7 +49,6 @@ body::after{
   align-content: start;
   gap: 10px;
   transition: opacity 220ms ease, transform 220ms ease;
-}
 
 .hero{
   touch-action: pan-y; /* låt vertikal scroll/drag funka, men släpp horisontellt till JS */
