@@ -14,7 +14,7 @@
   let isSwiping = false;
   let startX = 0;
   let startY = 0;
-  let startTX = 0;          // starting translateX
+  let startTX = 0;
   let currentTX = 0;
 
   // knob rotation
@@ -24,8 +24,15 @@
   let rotationDeg = 0;
   let menuMode = false;
 
+  // knob fade/pulse
   let knobFadeTimer = null;
   let lastTouchTs = 0;
+
+  // double tap detection
+  let lastTapTs = 0;
+  let tapCandidate = false;
+  let tapStartX = 0;
+  let tapStartY = 0;
 
   const PAGES = 3;
   const ICONS = 10;
@@ -52,6 +59,18 @@
     if (menuMode) return;
     menuMode = true;
     document.body.classList.add("isMenuMode");
+  }
+
+  function exitMenuMode(){
+    menuMode = false;
+    document.body.classList.remove("isMenuMode");
+
+    // reset icon highlight
+    iconItems.forEach((it, i) => it.classList.toggle("isActive", i === 0));
+
+    // reset rotation visuellt
+    rotationDeg = 0;
+    knobImg.style.transform = `rotate(0deg)`;
   }
 
   function knobActive(){
@@ -85,10 +104,12 @@
     rotationDeg = deg;
     knobImg.style.transform = `rotate(${rotationDeg}deg)`;
 
+    // När man börjar snurra: visa iconRail + dölj hero
     if (!menuMode && Math.abs(rotationDeg) >= 12){
       enterMenuMode();
     }
 
+    // Aktiv ikon baserat på rotation
     if (menuMode){
       const idx = ((Math.floor(rotationDeg / DEG_PER_ICON) % ICONS) + ICONS) % ICONS;
       iconItems.forEach((it, i) => it.classList.toggle("isActive", i === idx));
@@ -158,10 +179,16 @@
   hero.addEventListener("pointercancel", endSwipe);
 
   /* =========================
-     KNOB ROTATION
+     KNOB ROTATION + DOUBLE TAP
   ========================= */
   knob.addEventListener("pointerdown", (e) => {
     knobActive();
+
+    // dubbel-tap kandidat start
+    tapCandidate = true;
+    tapStartX = e.clientX;
+    tapStartY = e.clientY;
+
     isRotating = true;
     knob.setPointerCapture(e.pointerId);
 
@@ -175,16 +202,35 @@
     if (!isRotating) return;
     knobActive();
 
+    // om man rör sig mer än lite -> inte en tap
+    const dx = e.clientX - tapStartX;
+    const dy = e.clientY - tapStartY;
+    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) tapCandidate = false;
+
     const a = getAngleFromCenter(e.clientX, e.clientY, knob);
     let delta = a - rotStartAngle;
     delta = normalizeDeltaAngle(delta);
 
+    // snurrar man lite -> inte en tap
+    if (Math.abs(delta) > 6) tapCandidate = false;
+
     updateKnobRotation(rotStartDeg + delta);
   });
 
-  function endRotate(){
+  function endRotate(e){
     if (!isRotating) return;
     isRotating = false;
+
+    // Dubbel-tap: två "tapCandidate" inom 320ms
+    if (tapCandidate){
+      const now = Date.now();
+      if (now - lastTapTs <= 320){
+        exitMenuMode();
+        lastTapTs = 0;
+      } else {
+        lastTapTs = now;
+      }
+    }
   }
 
   knob.addEventListener("pointerup", endRotate);
