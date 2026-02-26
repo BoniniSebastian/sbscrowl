@@ -20,7 +20,7 @@ body::after{
   content:"";
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.62); /* svart lager med opacitet */
+  background: rgba(0,0,0,.62);
   z-index: -1;
 }
 
@@ -41,7 +41,7 @@ body::after{
 .hero{
   position: relative;
   width: 100%;
-  height: 35vh;            /* ca 35% av ytan från ovankanten */
+  height: 35vh;
   min-height: 260px;
   max-height: 360px;
   padding: 12px 0 0 0;
@@ -58,7 +58,7 @@ body::after{
   gap: 14px;
   will-change: transform;
   transition: transform 260ms ease;
-  padding: 0 10px; /* lite luft i kanterna */
+  padding: 0 10px;
 }
 
 .heroCard{
@@ -81,13 +81,11 @@ body::after{
   overflow: hidden;
 }
 
-/* “lite ljusare när man gör swipen” */
 .hero.isSwiping .heroCard{
   background: rgba(30,30,30,.40);
   border-color: rgba(255,255,255,.18);
 }
 
-/* Nummer i korten (tillfälligt) */
 .heroNum{
   position: absolute;
   inset: 0;
@@ -118,11 +116,11 @@ body::after{
 }
 .dot.isActive{
   background: rgba(255,255,255,.92);
-  transform: scale(1.35); /* lite större */
+  transform: scale(1.35);
   opacity: 1;
 }
 
-/* När vi går in i “wheel mode” ska startsektionerna döljas */
+/* Menu-mode: dölj start */
 body.isMenuMode .hero{
   opacity: 0;
   transform: translateY(-8px);
@@ -181,63 +179,21 @@ body.isMenuMode .iconRail{
   color: rgba(255,255,255,.92);
 }
 
-/* ============ KNOB (bottom-left) ============ */
-.knob{
+/* ============ RIGHT EDGE SWIPE ZONE ============ */
+/* Diskret interaktionszon på högerkanten */
+.edgeRight{
   position: absolute;
-  left: max(10px, env(safe-area-inset-left));
-  bottom: max(10px, env(safe-area-inset-bottom));
-  width: 92px;
-  height: 92px;
-
-  border: 0;
-  background: transparent;
-  padding: 0;
-  border-radius: 999px;
-
-  display: grid;
-  place-items: center;
-
-  opacity: .22;                 /* “blir synliggare om man nuddar den” */
-  transform: translateZ(0);
-  transition: opacity 220ms ease, transform 220ms ease;
-  touch-action: none; /* viktigt för egen rotation/gest */
-}
-
-.knob img{
-  width: 100%;
+  top: 0;
+  right: 0;
+  width: 22px;   /* swipe från höger */
   height: 100%;
-  display: block;
-  pointer-events: none;
-  user-select: none;
-  transform: rotate(0deg);
-  transition: transform 40ms linear;
-  filter: drop-shadow(0 0 18px rgba(255,255,255,.08));
+  background: transparent;
+  touch-action: pan-y;
 }
 
-.knob.isActive{
-  opacity: .92;
-}
-
-/* “pulserar lite lätt men avtar om man inte nuddar” */
-@keyframes knobPulse {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.04); }
-  100% { transform: scale(1); }
-}
-.knob.isPulsing{
-  animation: knobPulse 1.1s ease-in-out infinite;
-}
-
-/* Lite bättre känsla på iPhone */
+/* iPad: lite bredare edge-zon så det känns bra */
 @media (min-width: 768px){
   .hero{ max-width: 520px; }
   .heroTrack{ padding: 0 14px; }
-}
-body.isMenuMode .knob{
-  transform: scale(1.25);
-  opacity: 1;
-}
-
-body.isMenuMode .knob img{
-  filter: drop-shadow(0 0 28px rgba(255,255,255,.18));
+  .edgeRight{ width: 28px; }
 }
