@@ -1,48 +1,139 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>WebApp</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>SB Dash v1</title>
+  <link rel="stylesheet" href="style.css?v=1" />
 </head>
 <body>
-  <main class="app" id="app" aria-label="App">
 
-    <!-- START / HERO CAROUSEL -->
-    <section class="hero" id="hero" aria-label="Startsektioner">
-      <div class="heroTrack" id="heroTrack">
-        <article class="heroCard" data-index="0"><div class="heroNum">1</div></article>
-        <article class="heroCard" data-index="1"><div class="heroNum">2</div></article>
-        <article class="heroCard" data-index="2"><div class="heroNum">3</div></article>
+  <!-- BACKGROUND -->
+  <div class="bg" aria-hidden="true"></div>
+
+  <!-- APP -->
+  <main class="app" id="app">
+
+    <!-- CAROUSEL -->
+    <section class="carouselViewport" id="carouselViewport" aria-label="Slides">
+      <div class="carouselTrack" id="carouselTrack">
+
+        <!-- SLIDE 1 (DATE) -->
+        <section class="slide" data-title="Datum">
+          <div class="slideInner">
+            <div class="dateBlock" id="dateBlock" aria-label="Dagens datum">
+              <div class="dateLine" id="dateWeekday">—</div>
+              <div class="dateLine" id="dateDayMonth">—</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 2 -->
+        <section class="slide" data-title="Slide 2">
+          <div class="slideInner">
+            <div class="placeholder">
+              <div class="phTitle">SLIDE 2</div>
+              <div class="phSub">Placeholder</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 3 -->
+        <section class="slide" data-title="Slide 3">
+          <div class="slideInner">
+            <div class="placeholder">
+              <div class="phTitle">SLIDE 3</div>
+              <div class="phSub">Placeholder</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 4 -->
+        <section class="slide" data-title="Slide 4">
+          <div class="slideInner">
+            <div class="placeholder">
+              <div class="phTitle">SLIDE 4</div>
+              <div class="phSub">Placeholder</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 5 -->
+        <section class="slide" data-title="Slide 5">
+          <div class="slideInner">
+            <div class="placeholder">
+              <div class="phTitle">SLIDE 5</div>
+              <div class="phSub">Placeholder</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 6 -->
+        <section class="slide" data-title="Slide 6">
+          <div class="slideInner">
+            <div class="placeholder">
+              <div class="phTitle">SLIDE 6</div>
+              <div class="phSub">Placeholder</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 7 -->
+        <section class="slide" data-title="Slide 7">
+          <div class="slideInner">
+            <div class="placeholder">
+              <div class="phTitle">SLIDE 7</div>
+              <div class="phSub">Placeholder</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 8 -->
+        <section class="slide" data-title="Slide 8">
+          <div class="slideInner">
+            <div class="placeholder">
+              <div class="phTitle">SLIDE 8</div>
+              <div class="phSub">Placeholder</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SLIDE 9 -->
+        <section class="slide" data-title="Slide 9">
+          <div class="slideInner">
+            <div class="placeholder">
+              <div class="phTitle">SLIDE 9</div>
+              <div class="phSub">Placeholder</div>
+            </div>
+          </div>
+        </section>
+
       </div>
 
-      <div class="dots" id="dots" aria-label="Sidor">
-        <span class="dot isActive" data-dot="0"></span>
-        <span class="dot" data-dot="1"></span>
-        <span class="dot" data-dot="2"></span>
+      <!-- 3 DOTS (always visible) -->
+      <div class="tripDots" id="tripDots" aria-label="Sidor (1–3 / 4–6 / 7–9)">
+        <span class="tDot isActive"></span>
+        <span class="tDot"></span>
+        <span class="tDot"></span>
       </div>
     </section>
 
-    <!-- RIGHT ICON RAIL (hidden until menu mode) -->
-    <aside class="iconRail" id="iconRail" aria-label="Ikoner">
-      <div class="iconItem isActive" data-icon="1">1</div>
-      <div class="iconItem" data-icon="2">2</div>
-      <div class="iconItem" data-icon="3">3</div>
-      <div class="iconItem" data-icon="4">4</div>
-      <div class="iconItem" data-icon="5">5</div>
-      <div class="iconItem" data-icon="6">6</div>
-      <div class="iconItem" data-icon="7">7</div>
-      <div class="iconItem" data-icon="8">8</div>
-      <div class="iconItem" data-icon="9">9</div>
-      <div class="iconItem" data-icon="10">10</div>
+    <!-- EDGE HOT ZONE (left) -->
+    <div class="edgeZone" id="edgeZone" aria-hidden="true"></div>
+
+    <!-- EDGE SELECTOR (appears on swipe from left edge) -->
+    <aside class="edgeSelector" id="edgeSelector" aria-label="Snabbval">
+      <div class="edgeDots" id="edgeDots" aria-hidden="true">
+        <!-- JS renders 9 dots -->
+      </div>
+      <div class="edgePicker" id="edgePicker" aria-hidden="true"></div>
     </aside>
 
-    <!-- (osynlig) edge-zon på höger sida för swipe-in -->
-    <div class="edgeRight" id="edgeRight" aria-hidden="true"></div>
+    <!-- BACKDROP for edge selector -->
+    <div class="edgeBackdrop" id="edgeBackdrop" aria-hidden="true"></div>
 
   </main>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=1"></script>
 </body>
 </html>
