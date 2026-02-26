@@ -1,4 +1,7 @@
 (() => {
+
+  console.log("LOADED ✅");
+  
   const hero = document.getElementById("hero");
   const heroTrack = document.getElementById("heroTrack");
   const dots = Array.from(document.querySelectorAll(".dot"));
