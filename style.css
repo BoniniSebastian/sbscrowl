@@ -156,18 +156,20 @@ body.panelOpen .iconRail{
   content:"";
   position: absolute;
   left: 50%;
-  top: 52%;
-  transform: translate(-50%, -50%);
+  top: calc(70px + var(--safeTop));   /* flytta upp */
+  transform: translateX(-50%);
   width: min(92vw, 720px);
-  height: min(68vh, 680px);          /* smaller than before */
+  height: min(42vh, 420px);           /* halvera-ish */
   border-radius: 28px;
 
-  /* BIGGER contrast change while swiping */
-  background: rgba(0,0,0, calc(.06 + (.52 * var(--swipeP))));
-  border: 1px solid rgba(255,255,255, calc(.06 + (.14 * var(--swipeP))));
-  backdrop-filter: blur(calc(2px + (16px * var(--swipeP))));
-  -webkit-backdrop-filter: blur(calc(2px + (16px * var(--swipeP))));
-  box-shadow: 0 18px 70px rgba(0,0,0, calc(.12 + (.55 * var(--swipeP))));
+  /* VID SWIPE: vit “glass” istället för mörk */
+  background: rgba(255,255,255, calc(.00 + (.14 * var(--swipeP))));
+  border: 1px solid rgba(255,255,255, calc(.00 + (.18 * var(--swipeP))));
+  box-shadow: 0 18px 70px rgba(0,0,0, calc(.00 + (.35 * var(--swipeP))));
+
+  /* viktigt: INGEN blur som sabbar text */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 
   pointer-events:none;
   z-index: 6;
@@ -178,12 +180,15 @@ body.panelOpen .iconRail{
   content:"";
   position:absolute;
   left: 50%;
-  top: 52%;
-  transform: translate(-50%, -50%);
+  top: calc(70px + var(--safeTop));
+  transform: translateX(-50%);
   width: min(92vw, 720px);
-  height: min(68vh, 680px);
+  height: min(42vh, 420px);
   border-radius: 28px;
-  border: 1px solid rgba(255,255,255, calc(.10 * var(--swipeP)));
+
+  /* ramen ska bara synas när man swipar */
+  border: 1px solid rgba(255,255,255, calc(.22 * var(--swipeP)));
+
   pointer-events:none;
   z-index: 7;
 }
