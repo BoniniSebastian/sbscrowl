@@ -67,13 +67,13 @@ body{
 .iconRail{
   position: fixed;
   left: calc(12px + var(--safeL));
-  /* moved DOWN more */
-  top: calc(200px + var(--safeTop));
+  top: auto;
+  bottom: calc(24px + var(--safeBot)); /* ner så långt det går */
   z-index: 40;
 
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;           /* tajtare */
 
   padding: 0;
   background: transparent;
@@ -97,13 +97,10 @@ body.panelOpen .iconRail{
 }
 
 .railItem{
-  display: grid;
-  grid-template-columns: 22px 1fr;
-  align-items: center;
-  gap: 12px;
-
-  padding: 6px 8px;
-  border-radius: 16px;
+  grid-template-columns: 18px 1fr;
+  gap: 10px;
+  padding: 5px 6px;
+  border-radius: 14px;
 
   color: rgba(255,255,255,.70);
 }
@@ -118,7 +115,7 @@ body.panelOpen .iconRail{
 }
 
 .railLabel{
-  font-size: 13px;
+  font-size: 12.5px;
   letter-spacing: .01em;
   white-space: nowrap;
 }
@@ -214,11 +211,11 @@ body.panelOpen .iconRail{
 /* This is only a content wrapper now (NO background/border!) */
 .slideInner{
   width: min(92vw, 720px);
-  height: min(68vh, 680px);
+  height: min(42vh, 420px);
   border-radius: 28px;
   position: relative;
-  overflow: hidden; /* keeps content inside fixed card */
-  z-index: 9;       /* above card bg */
+  overflow: hidden;
+  z-index: 9;
 }
 
 /* Slide 1 date */
@@ -259,7 +256,7 @@ body.panelOpen .iconRail{
 .tripDots{
   position: absolute;
   left: 50%;
-  top: calc(14px + var(--safeTop));
+  top: calc(70px + var(--safeTop) + min(42vh, 420px) + 10px);
   transform: translateX(-50%);
   display: flex;
   gap: 10px;
