@@ -1,5 +1,5 @@
 (() => {
-  console.log("SB Dash v1 (rubber-right v6) loaded ✅");
+  console.log("SB Dash v1 (v7) loaded ✅");
   const $ = (id) => document.getElementById(id);
 
   /* ===== Stable viewport height (iOS) ===== */
@@ -29,6 +29,7 @@
 
   // Rubber
   const edgeZoneR = $("edgeZoneR");
+  const rubberWrap = $("rubberWrap");
   const rubberSvg = $("rubberSvg");
   const rubberPath = $("rubberPath");
   const rubberBackdrop = $("rubberBackdrop");
@@ -37,7 +38,6 @@
   const sectionWrap = $("sectionWrap");
   const sectionPanel = $("sectionPanel");
   const sectionTitle = $("sectionTitle");
-  const sectionBackdrop = $("sectionBackdrop");
 
   /* ===== Config ===== */
   const CAROUSEL_COUNT = 3;
@@ -65,7 +65,9 @@
     tripDots.forEach((d, idx)=>d.classList.toggle("isActive", idx===i));
   }
 
-  /* ===== Carousel ===== */
+  /* ===============================
+     CAROUSEL (3 slides) – content swipe
+  =============================== */
   let slideIndex = 0;
 
   function snapToSlide(i, animate=true){
@@ -107,13 +109,16 @@
     if(!dragging || e.pointerId!==pointerId) return;
     dx = e.clientX - startX;
 
+    // resistance at ends
     if((slideIndex===0 && dx>0) || (slideIndex===CAROUSEL_COUNT-1 && dx<0)) dx*=0.35;
 
     const w=getWidth();
     track.style.transform = `translate3d(${(-slideIndex*w)+dx}px,0,0)`;
 
     const p=Math.min(1, Math.abs(dx)/w);
-    viewport.style.opacity = String(1-0.28*p);
+    // make whole view dim a bit while swiping (optional but nice)
+    viewport.style.opacity = String(1 - 0.10*p);
+    // MUCH stronger card contrast handled via CSS ::before
     setSwipeP(p);
   });
 
@@ -136,7 +141,7 @@
   window.addEventListener("resize", ()=>snapToSlide(slideIndex,false), {passive:true});
 
   /* ===============================
-     ICON RAIL (render + highlight)
+     ICON RAIL
   =============================== */
   let activeSection = 0;
 
@@ -145,10 +150,9 @@
     SECTIONS.forEach((label, i)=>{
       const item=document.createElement("div");
       item.className="railItem"+(i===activeSection?" isActive":"");
-      item.dataset.index=String(i);
 
       const ic=document.createElement("div");
-      ic.className="railIcon"; // tiny placeholder dot
+      ic.className="railIcon";
 
       const lb=document.createElement("div");
       lb.className="railLabel";
@@ -182,45 +186,45 @@
   }
 
   /* ===============================
-     RUBBER BAND (RIGHT)
+     RUBBER BAND (RIGHT) – MORE ELASTIC + LONGER
   =============================== */
-  function rubberBand(x, limit){
-    const t=Math.max(0,x);
-    const d=limit;
-    return (d*t)/(d+t);
+
+  // More elastic curve: rises fast, keeps moving, then slowly stiffens
+  function elasticPull(x){
+    const t = Math.max(0, x);
+    // Two-stage feel: exponential + soft tail
+    const a = 320 * (1 - Math.exp(-t / 120));  // quick rise
+    const b = 220 * (1 - Math.exp(-t / 420));  // long tail
+    return a + b; // can go big
   }
 
-  function magnetY(y){
+  function magnetY(screenY){
     const centers = railCenters();
     let best=0, bestD=Infinity;
     for(let i=0;i<centers.length;i++){
-      const d=Math.abs(centers[i]-y);
+      const d=Math.abs(centers[i]-screenY);
       if(d<bestD){ bestD=d; best=i; }
     }
     const target=centers[best] ?? (window.innerHeight/2);
 
-    const dist=Math.abs(target-y);
-    const strength=1 - clamp(dist/140, 0, 1);
-    const snapped = y + (target - y) * (0.55 * strength);
+    const dist=Math.abs(target-screenY);
+    const strength=1 - clamp(dist/170, 0, 1);
+    const snapped = screenY + (target - screenY) * (0.62 * strength);
 
     return { y: snapped, idx: best };
   }
 
-  function setRubberPath(bendPx, yPx){
-    const wrap = $("rubberWrap");
-    const rect = wrap.getBoundingClientRect();
+  function setRubberPath(bendPx, yLocal){
+    const rect = rubberWrap.getBoundingClientRect();
     const H = rect.height;
-    const W = 120;
+    const W = 140;
 
-    const top = 20;
-    const bot = H - 20;
-
-    // anchor near right inside svg
+    const top = 14;
+    const bot = H - 14;
     const x0 = W - 16;
 
-    // bend left
     const cx = x0 - bendPx;
-    const cy = clamp(yPx, top, bot);
+    const cy = clamp(yLocal, top, bot);
 
     rubberSvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     rubberPath.setAttribute("d", `M ${x0} ${top} Q ${cx} ${cy} ${x0} ${bot}`);
@@ -228,9 +232,8 @@
 
   let rubberTracking=false, rubberActive=false, rubberStartX=0, rubberPointer=null, candidateIndex=0;
 
-  const EDGE_THRESHOLD = 18;
-  const PULL_LIMIT = 220;   // bigger pull so it goes out longer
-  const BEND_LIMIT = 180;   // max bend
+  const EDGE_THRESHOLD = 14;
+  const BEND_MAX = 340;  // MUCH longer bend
 
   function openRubber(){
     rubberActive=true;
@@ -266,21 +269,18 @@
       }
     }
 
-    const pull = rubberBand(pullRaw, PULL_LIMIT);
-    const bend = clamp(pull, 0, BEND_LIMIT);
+    // strong elastic
+    const bend = clamp(elasticPull(pullRaw), 0, BEND_MAX);
 
-    // Convert finger Y to rubberWrap local Y
-    const wrap = $("rubberWrap");
-    const rect = wrap.getBoundingClientRect();
-    const localY = e.clientY - rect.top;
-
-    const m = magnetY(e.clientY); // magnet in screen coords
+    // snap/magnet to rail rows
+    const m = magnetY(e.clientY);
     candidateIndex = m.idx;
 
-    // map snapped screen Y to local Y
-    const snappedLocalY = (m.y - rect.top);
+    // local coords inside rubberWrap
+    const rect = rubberWrap.getBoundingClientRect();
+    const yLocal = (m.y - rect.top);
 
-    setRubberPath(bend, snappedLocalY);
+    setRubberPath(bend, yLocal);
     setActiveSection(candidateIndex);
   });
 
@@ -292,11 +292,11 @@
     sectionWrap.classList.add("isOpen");
     sectionWrap.setAttribute("aria-hidden","false");
 
-    // close rubber/rail while panel open
+    // hide rubber/rail while panel open
     closeRubber();
     setBlockScroll(false);
 
-    // reset panel position
+    // reset panel
     sectionPanel.style.transition = "";
     sectionPanel.style.transform = "translateX(-50%) translateY(0px)";
   }
@@ -333,29 +333,37 @@
   });
 
   rubberBackdrop.addEventListener("click", ()=>{
+    // just cancel the rubber (not opening/closing panels)
     closeRubber();
     setBlockScroll(false);
   });
 
   /* ===============================
-     PANEL: swipe down to close
+     PANEL: swipe DOWN to close (ONLY)
   =============================== */
   let panelDragging=false, panelStartY=0, panelDY=0, panelPid=null;
 
   sectionPanel.addEventListener("pointerdown",(e)=>{
     if(!sectionWrap.classList.contains("isOpen")) return;
+
+    // start tracking down drag
     panelDragging=true;
     panelPid=e.pointerId;
     panelStartY=e.clientY;
     panelDY=0;
+
     sectionPanel.setPointerCapture(panelPid);
     sectionPanel.style.transition = "";
   });
 
   sectionPanel.addEventListener("pointermove",(e)=>{
     if(!panelDragging || e.pointerId!==panelPid) return;
+
     panelDY = e.clientY - panelStartY;
-    if(panelDY < 0) panelDY *= 0.15; // little resistance upwards
+
+    // allow only down movement (up has resistance)
+    if(panelDY < 0) panelDY *= 0.12;
+
     sectionPanel.style.transform = `translateX(-50%) translateY(${panelDY}px)`;
   });
 
@@ -364,14 +372,13 @@
     panelDragging=false;
 
     const closeThreshold = 120;
-    const velocityClose = Math.abs(panelDY) > closeThreshold;
 
-    if(panelDY > closeThreshold || velocityClose){
+    if(panelDY > closeThreshold){
       // animate out then close
       sectionPanel.style.transition = "transform 220ms cubic-bezier(.2,.9,.2,1)";
-      sectionPanel.style.transform = `translateX(-50%) translateY(${Math.max(panelDY, 380)}px)`;
+      sectionPanel.style.transform = `translateX(-50%) translateY(${Math.max(panelDY, 520)}px)`;
       setTimeout(closeSection, 180);
-    }else{
+    } else {
       // snap back
       sectionPanel.style.transition = "transform 220ms cubic-bezier(.2,.9,.2,1)";
       sectionPanel.style.transform = "translateX(-50%) translateY(0px)";
@@ -380,10 +387,8 @@
     panelDY=0; panelPid=null;
   }
 
-  sectionPanel.addEventListener("pointerup", (e)=>{ if(panelPid!==null && e.pointerId!==panelPid) return; endPanelDrag(); });
+  sectionPanel.addEventListener("pointerup",(e)=>{ if(panelPid!==null && e.pointerId!==panelPid) return; endPanelDrag(); });
   sectionPanel.addEventListener("pointercancel",(e)=>{ if(panelPid!==null && e.pointerId!==panelPid) return; endPanelDrag(); });
-
-  sectionBackdrop.addEventListener("click", closeSection);
 
   /* ===== Init ===== */
   snapToSlide(0,false);
