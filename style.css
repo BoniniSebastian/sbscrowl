@@ -221,7 +221,7 @@ body.panelOpen .iconRail{
 /* Slide 1 date */
 .dateBlock{
   position: absolute;
-  top: 0px;          /* högre upp i kortet */
+  top: 22px;          /* högre upp i kortet */
   right: 14px;
   text-align: right;
   line-height: 1.0;
