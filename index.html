@@ -1,27 +1,26 @@
-<!doctype html> 
+<!doctype html>
 <html lang="sv">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>SB Dash v1</title>
-  <link rel="stylesheet" href="style.css?v=2" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
 
   <!-- BACKGROUND -->
   <div class="bg" aria-hidden="true"></div>
 
-  <!-- APP -->
   <main class="app" id="app">
 
-    <!-- CAROUSEL -->
+    <!-- CAROUSEL (3 slides) -->
     <section class="carouselViewport" id="carouselViewport" aria-label="Slides">
       <div class="carouselTrack" id="carouselTrack">
 
         <!-- SLIDE 1 (DATE) -->
         <section class="slide" data-title="Datum">
           <div class="slideInner">
-            <div class="dateBlock" id="dateBlock" aria-label="Dagens datum">
+            <div class="dateBlock" aria-label="Dagens datum">
               <div class="dateLine" id="dateWeekday">—</div>
               <div class="dateLine" id="dateDayMonth">—</div>
             </div>
@@ -48,70 +47,10 @@
           </div>
         </section>
 
-        <!-- SLIDE 4 -->
-        <section class="slide" data-title="Slide 4">
-          <div class="slideInner">
-            <div class="placeholder">
-              <div class="phTitle">SLIDE 4</div>
-              <div class="phSub">Placeholder</div>
-            </div>
-          </div>
-        </section>
-
-        <!-- SLIDE 5 -->
-        <section class="slide" data-title="Slide 5">
-          <div class="slideInner">
-            <div class="placeholder">
-              <div class="phTitle">SLIDE 5</div>
-              <div class="phSub">Placeholder</div>
-            </div>
-          </div>
-        </section>
-
-        <!-- SLIDE 6 -->
-        <section class="slide" data-title="Slide 6">
-          <div class="slideInner">
-            <div class="placeholder">
-              <div class="phTitle">SLIDE 6</div>
-              <div class="phSub">Placeholder</div>
-            </div>
-          </div>
-        </section>
-
-        <!-- SLIDE 7 -->
-        <section class="slide" data-title="Slide 7">
-          <div class="slideInner">
-            <div class="placeholder">
-              <div class="phTitle">SLIDE 7</div>
-              <div class="phSub">Placeholder</div>
-            </div>
-          </div>
-        </section>
-
-        <!-- SLIDE 8 -->
-        <section class="slide" data-title="Slide 8">
-          <div class="slideInner">
-            <div class="placeholder">
-              <div class="phTitle">SLIDE 8</div>
-              <div class="phSub">Placeholder</div>
-            </div>
-          </div>
-        </section>
-
-        <!-- SLIDE 9 -->
-        <section class="slide" data-title="Slide 9">
-          <div class="slideInner">
-            <div class="placeholder">
-              <div class="phTitle">SLIDE 9</div>
-              <div class="phSub">Placeholder</div>
-            </div>
-          </div>
-        </section>
-
       </div>
 
       <!-- 3 DOTS (always visible) -->
-      <div class="tripDots" id="tripDots" aria-label="Sidor (1–3 / 4–6 / 7–9)">
+      <div class="tripDots" id="tripDots" aria-label="Sidor">
         <span class="tDot isActive"></span>
         <span class="tDot"></span>
         <span class="tDot"></span>
@@ -121,19 +60,31 @@
     <!-- EDGE HOT ZONE (left) -->
     <div class="edgeZone" id="edgeZone" aria-hidden="true"></div>
 
-    <!-- EDGE SELECTOR (appears on swipe from left edge) -->
+    <!-- EDGE SELECTOR -->
     <aside class="edgeSelector" id="edgeSelector" aria-label="Snabbval">
-      <div class="edgeDots" id="edgeDots" aria-hidden="true">
-        <!-- JS renders 9 dots -->
-      </div>
+      <div class="edgeDots" id="edgeDots" aria-hidden="true"></div>
       <div class="edgePicker" id="edgePicker" aria-hidden="true"></div>
     </aside>
 
-    <!-- BACKDROP for edge selector -->
     <div class="edgeBackdrop" id="edgeBackdrop" aria-hidden="true"></div>
+
+    <!-- SECTION OVERLAY (opened by edge selector) -->
+    <div class="sectionWrap" id="sectionWrap" aria-hidden="true">
+      <div class="sectionPanel" id="sectionPanel" role="dialog" aria-modal="true">
+        <div class="sectionHeader">
+          <div class="sectionTitle" id="sectionTitle">—</div>
+          <button class="sectionClose" id="sectionClose" aria-label="Stäng">×</button>
+        </div>
+        <div class="sectionBody" id="sectionBody">
+          <!-- placeholder -->
+          <div class="sectionHint">Här kommer ikoner/rutor för sektionen sen.</div>
+        </div>
+      </div>
+      <div class="sectionBackdrop" id="sectionBackdrop" aria-hidden="true"></div>
+    </div>
 
   </main>
 
-  <script src="app.js?v=2"></script>
+  <script defer src="app.js?v=3"></script>
 </body>
 </html>
