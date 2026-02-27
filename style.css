@@ -55,7 +55,7 @@ body{
   height: calc(var(--vh) * 100);
   padding-left: calc(12px + var(--safeL));
   padding-right: calc(12px + var(--safeR));
-  padding-top: calc(12px + var(--safeTop));
+  padding-top: calc(4px + var(--safeTop));
   padding-bottom: calc(12px + var(--safeBot));
   overflow:hidden;
   touch-action:none;
