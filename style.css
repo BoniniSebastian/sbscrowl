@@ -153,10 +153,10 @@ body.panelOpen .iconRail{
   content:"";
   position: absolute;
   left: 50%;
-  top: calc(70px + var(--safeTop));   /* flytta upp */
+  top: calc(18px + var(--safeTop));
   transform: translateX(-50%);
-  width: min(92vw, 720px);
-  height: min(42vh, 420px);           /* halvera-ish */
+  width: min(90vw, 680px);
+  height: min(38vh, 380px);         /* halvera-ish */
   border-radius: 28px;
 
   /* VID SWIPE: vit “glass” istället för mörk */
@@ -177,10 +177,10 @@ body.panelOpen .iconRail{
   content:"";
   position:absolute;
   left: 50%;
-  top: calc(70px + var(--safeTop));
+   top: calc(18px + var(--safeTop));
   transform: translateX(-50%);
-  width: min(92vw, 720px);
-  height: min(42vh, 420px);
+  width: min(90vw, 680px);
+  height: min(38vh, 380px);
   border-radius: 28px;
 
   /* ramen ska bara synas när man swipar */
