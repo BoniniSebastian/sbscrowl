@@ -226,12 +226,26 @@
     edgePicker.style.opacity = "0";
   }
 
-  function setEdgePull(px){
-    const p = clamp(px, 0, EDGE_PULL_MAX);
-    const percent = -100 + (p / EDGE_PULL_MAX) * 92; // -100 -> -8
-    edgeSelector.style.transform = `translate3d(${percent}%,0,0)`;
-    edgeSelector.style.opacity = "1";
-  }
+  function rubberBand(x, limit){
+  const t = Math.max(0, x);
+  const d = limit;
+  return (d * t) / (d + t);
+}
+
+function setEdgePull(px){
+  const raw = Math.max(0, px);
+  const eased = rubberBand(raw, EDGE_PULL_MAX);
+  const progress = eased / EDGE_PULL_MAX;
+
+  const percent = -100 + progress * 94;
+
+  const stretch = 1 + Math.min(0.06, progress * 0.06);
+
+  edgeSelector.style.transform =
+    `translate3d(${percent}%,0,0) scaleX(${stretch})`;
+
+  edgeSelector.style.opacity = "1";
+}
 
   edgeZone.addEventListener("pointerdown", (e) => {
     if(sectionWrap.classList.contains("isOpen")) return;
