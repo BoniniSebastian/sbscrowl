@@ -5,8 +5,6 @@
   --safeR: env(safe-area-inset-right, 0px);
 
   --vh: 1vh;
-
-  /* swipe progress 0..1 (JS updates) */
   --swipeP: 0;
 
   --text: rgba(255,255,255,.96);
@@ -18,19 +16,20 @@
   --turq: #19f6ff;
   --turqGlow: rgba(25,246,255,.18);
 
-  --panelGlass: rgba(10,12,18,.28);
-  --panelBorder: rgba(255,255,255,.10);
+  --glass: rgba(10,12,18,.22);
+  --glass2: rgba(10,12,18,.35);
+  --border: rgba(255,255,255,.10);
 }
 
 *{ box-sizing: border-box; }
 html,body{ height:100%; }
 
-/* ===== IMPORTANT: lock page scroll (iOS) ===== */
+/* lock scroll */
 html, body{
-  margin: 0;
-  overflow: hidden;              /* stop page scrolling */
-  overscroll-behavior: none;     /* stop rubber-banding */
-  touch-action: none;            /* we handle gestures ourselves */
+  margin:0;
+  overflow:hidden;
+  overscroll-behavior:none;
+  touch-action:none;
 }
 
 body{
@@ -54,29 +53,92 @@ body{
   z-index: 1;
   width: 100%;
   height: calc(var(--vh) * 100);
-
   padding-left: calc(12px + var(--safeL));
   padding-right: calc(12px + var(--safeR));
   padding-top: calc(12px + var(--safeTop));
   padding-bottom: calc(12px + var(--safeBot));
-
-  overflow: hidden;
-  touch-action: none;
+  overflow:hidden;
+  touch-action:none;
 }
 
-/* Carousel */
+/* ===============================
+   LEFT ICON RAIL
+=============================== */
+.iconRail{
+  position: fixed;
+  top: calc(18px + var(--safeTop));
+  left: calc(10px + var(--safeL));
+  z-index: 30;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  padding: 10px 10px;
+  border-radius: 18px;
+
+  background: rgba(0,0,0,.10);
+  border: 1px solid rgba(255,255,255,.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  max-height: calc(100vh - 36px - var(--safeTop) - var(--safeBot));
+  overflow: hidden;
+}
+
+.railItem{
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  align-items: center;
+  gap: 10px;
+
+  padding: 8px 10px;
+  border-radius: 16px;
+
+  color: rgba(255,255,255,.75);
+  opacity: .88;
+}
+
+.railIcon{
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+.railLabel{
+  font-size: 12.5px;
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
+
+.railItem.isActive{
+  color: rgba(255,255,255,.95);
+  opacity: 1;
+  background: rgba(10,12,18,.18);
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 0 18px rgba(25,246,255,.10);
+}
+
+.railItem.isActive .railIcon{
+  background: rgba(25,246,255,.22);
+  border-color: rgba(25,246,255,.32);
+  box-shadow: 0 0 16px rgba(25,246,255,.16);
+}
+
+/* ===============================
+   CAROUSEL
+=============================== */
 .carouselViewport{
   position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
-
-  /* IMPORTANT: prevent iOS from treating drag as scroll */
-  touch-action: none;
-  user-select: none;
+  touch-action:none;
+  user-select:none;
 }
 
-/* “Frame” only visible while swiping via --swipeP */
 .carouselViewport::after{
   content:"";
   position:absolute;
@@ -89,7 +151,7 @@ body{
 }
 
 .carouselTrack{
-  display: flex;
+  display:flex;
   height: 100%;
   will-change: transform;
   transform: translate3d(0,0,0);
@@ -109,7 +171,6 @@ body{
   border-radius: 28px;
   overflow: hidden;
 
-  /* glass/outline only during swipe */
   background: rgba(0,0,0, calc(.10 * var(--swipeP)));
   backdrop-filter: blur(calc(10px * var(--swipeP)));
   -webkit-backdrop-filter: blur(calc(10px * var(--swipeP)));
@@ -122,12 +183,10 @@ body{
   top: calc(18px + var(--safeTop));
   right: calc(14px + var(--safeR));
   text-align: right;
-
   line-height: 1.0;
   letter-spacing: -0.02em;
   font-weight: 900;
   font-size: clamp(36px, 6.5vw, 58px);
-
   text-shadow: 0 0 18px rgba(0,0,0,.35);
 }
 .dateLine{ margin:0; padding:0; }
@@ -164,102 +223,77 @@ body{
   pointer-events: none;
 }
 .tDot{
-  width: 6px;
-  height: 6px;
+  width: 6px; height: 6px;
   border-radius: 999px;
   background: var(--dot);
   opacity: .9;
 }
 .tDot.isActive{ background: var(--dotOn); }
 
-/* Edge zone */
-.edgeZone{
+/* ===============================
+   RIGHT RUBBER BAND
+=============================== */
+.edgeZoneR{
   position: fixed;
   top: 0;
-  left: 0;
-  width: calc(28px + var(--safeL));
+  right: 0;
+  width: calc(30px + var(--safeR));
   height: 100%;
-  z-index: 40;
+  z-index: 50;
   background: transparent;
-
-  /* IMPORTANT */
-  touch-action: none;
+  touch-action:none;
 }
 
-/* Edge selector panel (glass) */
-.edgeSelector{
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: min(78vw, 340px);
-
-  padding-top: calc(24px + var(--safeTop));
-  padding-bottom: calc(24px + var(--safeBot));
-  padding-left: calc(16px + var(--safeL));
-  padding-right: 16px;
-
-  display: grid;
-  align-content: center;
-  justify-items: start;
-  gap: 18px;
-
-  background: var(--panelGlass);
-  border-right: 1px solid var(--panelBorder);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-
-  z-index: 60;
-
-  transform: translate3d(-100%,0,0);
-  opacity: 0;
-  pointer-events: none;
-
-  will-change: transform, opacity;
-}
-
-.edgeBackdrop{
+.rubberBackdrop{
   position: fixed;
   inset: 0;
-  z-index: 55;
-  background: rgba(0,0,0,.35);
+  z-index: 45;
+  background: rgba(0,0,0,.18);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 180ms ease;
+  transition: opacity 160ms ease;
 }
 
-body.edgeActive .edgeBackdrop{
-  opacity: 1;
-  pointer-events: auto;
-}
-body.edgeActive .edgeSelector{
+body.rubberActive .rubberBackdrop{
   opacity: 1;
   pointer-events: auto;
 }
 
-/* Edge dots */
-.edgeDots{
-  position: relative;
-  display: grid;
-  gap: 18px;
-  padding-left: 10px;
-}
-.edgeDot{
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.85);
-  opacity: .6;
+.rubberWrap{
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 140px;
+  z-index: 55;
+  pointer-events: none;
+  opacity: 0;
 }
 
-/* Turquoise picker */
-.edgePicker{
-  position: absolute;
-  left: calc(18px + var(--safeL));
+body.rubberActive .rubberWrap{ opacity: 1; }
+
+.rubberSvg{
+  width: 100%;
+  height: 100%;
+}
+
+#rubberPath{
+  fill: none;
+  stroke: rgba(255,255,255,.45);
+  stroke-width: 2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 10px rgba(255,255,255,.06));
+  opacity: .85;
+}
+
+.rubberBall{
+  position: fixed;
+  right: calc(14px + var(--safeR));
   top: 50%;
   width: 30px;
   height: 30px;
   border-radius: 999px;
+  z-index: 60;
 
   background: var(--turq);
   box-shadow:
@@ -269,10 +303,15 @@ body.edgeActive .edgeSelector{
 
   transform: translate3d(0,-50%,0);
   opacity: 0;
-  will-change: transform, opacity;
+  pointer-events: none;
+  will-change: transform;
 }
 
-/* Section overlay (opened by edge selector) */
+body.rubberActive .rubberBall{ opacity: 1; }
+
+/* ===============================
+   SECTION OVERLAY
+=============================== */
 .sectionWrap{
   position: fixed;
   inset: 0;
@@ -338,25 +377,7 @@ body.edgeActive .edgeSelector{
   color: rgba(255,255,255,.60);
   font-size: 14px;
 }
-/* FORCE vertical dots even if other CSS leaks in */
-.edgeDots{
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 18px;
-  padding-left: 10px;
-  align-items: flex-start;
-}
 
-/* Give the panel a slightly more “elastic” feel when moving */
-.edgeSelector{
-  transform: translate3d(-100%,0,0);
-  transition: none; /* JS will animate */
-}
-
-/* Picker feels more alive */
-.edgePicker{
-  transition: none; /* JS animates */
-}
 @media (prefers-reduced-motion: reduce){
-  .edgeBackdrop{ transition: none; }
+  .rubberBackdrop{ transition:none; }
 }
