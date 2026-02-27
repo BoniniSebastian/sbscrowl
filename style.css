@@ -210,8 +210,8 @@ body.panelOpen .iconRail{
 
 /* This is only a content wrapper now (NO background/border!) */
 .slideInner{
-  width: min(92vw, 720px);
-  height: min(42vh, 420px);
+  width: min(90vw, 680px);
+  height: min(38vh, 380px);
   border-radius: 28px;
   position: relative;
   overflow: hidden;
@@ -221,13 +221,14 @@ body.panelOpen .iconRail{
 /* Slide 1 date */
 .dateBlock{
   position: absolute;
-  top: 18px;
+  top: 10px;          /* högre upp i kortet */
   right: 14px;
   text-align: right;
   line-height: 1.0;
   letter-spacing: -0.02em;
   font-weight: 900;
-  font-size: clamp(36px, 6.5vw, 58px);
+
+  font-size: clamp(44px, 7.6vw, 72px);  /* större */
   text-shadow: 0 0 18px rgba(0,0,0,.35);
 }
 .dateLine{ margin:0; padding:0; }
@@ -256,7 +257,7 @@ body.panelOpen .iconRail{
 .tripDots{
   position: absolute;
   left: 50%;
-  top: calc(70px + var(--safeTop) + min(42vh, 420px) + 10px);
+  top: calc(18px + var(--safeTop) + min(38vh, 380px) + 10px);
   transform: translateX(-50%);
   display: flex;
   gap: 10px;
