@@ -16,8 +16,7 @@
   --turq: #19f6ff;
   --turqGlow: rgba(25,246,255,.18);
 
-  --glass: rgba(10,12,18,.22);
-  --glass2: rgba(10,12,18,.35);
+  --glass: rgba(10,12,18,.18);
   --border: rgba(255,255,255,.10);
 }
 
@@ -38,7 +37,7 @@ body{
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
 }
 
-/* Background image */
+/* Background */
 .bg{
   position: fixed;
   inset: 0;
@@ -62,61 +61,75 @@ body{
 }
 
 /* ===============================
-   LEFT ICON RAIL
+   ICON RAIL (hidden until rubber)
 =============================== */
 .iconRail{
   position: fixed;
-  top: calc(18px + var(--safeTop));
-  left: calc(10px + var(--safeL));
-  z-index: 30;
+  left: calc(12px + var(--safeL));
+  /* pushed down so it never clashes with date */
+  top: calc(140px + var(--safeTop));
+  z-index: 40;
 
   display: flex;
   flex-direction: column;
   gap: 14px;
 
-  padding: 10px 10px;
-  border-radius: 18px;
+  /* NO background box */
+  padding: 0;
+  border: 0;
+  background: transparent;
 
-  background: rgba(0,0,0,.10);
-  border: 1px solid rgba(255,255,255,.06);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: translate3d(-8px,0,0);
+  pointer-events: none;
 
-  max-height: calc(100vh - 36px - var(--safeTop) - var(--safeBot));
-  overflow: hidden;
+  transition: opacity 160ms ease, transform 220ms cubic-bezier(.2,.9,.2,1);
 }
 
+body.rubberActive .iconRail{
+  opacity: 1;
+  transform: translate3d(0,0,0);
+  pointer-events: auto;
+}
+
+body.panelOpen .iconRail{
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* each row */
 .railItem{
   display: grid;
-  grid-template-columns: 26px 1fr;
+  grid-template-columns: 22px 1fr;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 
-  padding: 8px 10px;
+  padding: 6px 8px;
   border-radius: 16px;
 
-  color: rgba(255,255,255,.75);
-  opacity: .88;
+  color: rgba(255,255,255,.70);
 }
 
+/* icon placeholder: make it tiny + subtle (you'll replace later) */
 .railIcon{
-  width: 22px;
-  height: 22px;
-  border-radius: 7px;
-  background: rgba(255,255,255,.18);
-  border: 1px solid rgba(255,255,255,.12);
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.22);
+  border: 1px solid rgba(255,255,255,.14);
+  opacity: .55;
 }
 
 .railLabel{
-  font-size: 12.5px;
+  font-size: 13px;
   letter-spacing: .01em;
   white-space: nowrap;
 }
 
+/* active highlight */
 .railItem.isActive{
-  color: rgba(255,255,255,.95);
-  opacity: 1;
-  background: rgba(10,12,18,.18);
+  color: rgba(255,255,255,.96);
+  background: rgba(10,12,18,.14);
   border: 1px solid rgba(255,255,255,.10);
   box-shadow: 0 0 18px rgba(25,246,255,.10);
 }
@@ -125,6 +138,7 @@ body{
   background: rgba(25,246,255,.22);
   border-color: rgba(25,246,255,.32);
   box-shadow: 0 0 16px rgba(25,246,255,.16);
+  opacity: 1;
 }
 
 /* ===============================
@@ -191,7 +205,7 @@ body{
 }
 .dateLine{ margin:0; padding:0; }
 
-/* Placeholder slides */
+/* placeholders */
 .placeholder{
   position: absolute;
   inset: 0;
@@ -231,7 +245,7 @@ body{
 .tDot.isActive{ background: var(--dotOn); }
 
 /* ===============================
-   RIGHT RUBBER BAND
+   RIGHT RUBBER BAND (shorter zone)
 =============================== */
 .edgeZoneR{
   position: fixed;
@@ -248,7 +262,7 @@ body{
   position: fixed;
   inset: 0;
   z-index: 45;
-  background: rgba(0,0,0,.18);
+  background: rgba(0,0,0,.12);
   opacity: 0;
   pointer-events: none;
   transition: opacity 160ms ease;
@@ -259,18 +273,25 @@ body.rubberActive .rubberBackdrop{
   pointer-events: auto;
 }
 
+body.panelOpen .rubberBackdrop{
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 .rubberWrap{
   position: fixed;
-  top: 0;
+  /* IMPORTANT: don't cover the whole screen like before */
+  top: calc(120px + var(--safeTop));
   right: 0;
-  height: 100%;
-  width: 140px;
+  height: calc(100% - 160px - var(--safeTop) - var(--safeBot));
+  width: 160px;
   z-index: 55;
   pointer-events: none;
   opacity: 0;
 }
 
 body.rubberActive .rubberWrap{ opacity: 1; }
+body.panelOpen .rubberWrap{ opacity: 0 !important; }
 
 .rubberSvg{
   width: 100%;
@@ -279,38 +300,15 @@ body.rubberActive .rubberWrap{ opacity: 1; }
 
 #rubberPath{
   fill: none;
-  stroke: rgba(255,255,255,.45);
-  stroke-width: 2;
+  stroke: rgba(255,255,255,.46);
+  stroke-width: 2.2;
   stroke-linecap: round;
   filter: drop-shadow(0 0 10px rgba(255,255,255,.06));
   opacity: .85;
 }
 
-.rubberBall{
-  position: fixed;
-  right: calc(14px + var(--safeR));
-  top: 50%;
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  z-index: 60;
-
-  background: var(--turq);
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.06) inset,
-    0 0 14px var(--turqGlow),
-    0 0 28px rgba(25,246,255,.12);
-
-  transform: translate3d(0,-50%,0);
-  opacity: 0;
-  pointer-events: none;
-  will-change: transform;
-}
-
-body.rubberActive .rubberBall{ opacity: 1; }
-
 /* ===============================
-   SECTION OVERLAY
+   SECTION OVERLAY (swipe down)
 =============================== */
 .sectionWrap{
   position: fixed;
@@ -346,6 +344,8 @@ body.rubberActive .rubberBall{ opacity: 1; }
 
   box-shadow: 0 16px 60px rgba(0,0,0,.55);
   overflow: hidden;
+
+  will-change: transform;
 }
 
 .sectionHeader{
@@ -359,16 +359,6 @@ body.rubberActive .rubberBall{ opacity: 1; }
   font-weight: 800;
   letter-spacing: .02em;
 }
-.sectionClose{
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.15);
-  color: rgba(255,255,255,.92);
-  font-size: 22px;
-  line-height: 0;
-}
 .sectionBody{
   padding: 16px;
   color: rgba(255,255,255,.85);
@@ -380,4 +370,5 @@ body.rubberActive .rubberBall{ opacity: 1; }
 
 @media (prefers-reduced-motion: reduce){
   .rubberBackdrop{ transition:none; }
+  .iconRail{ transition:none; }
 }
