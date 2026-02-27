@@ -6,6 +6,9 @@
 
   --vh: 1vh;
 
+  /* swipe progress 0..1 (JS updates) */
+  --swipeP: 0;
+
   --text: rgba(255,255,255,.96);
   --muted: rgba(255,255,255,.55);
 
@@ -30,39 +33,28 @@ body{
   overscroll-behavior: none;
 }
 
-/* ===============================
-   BACKGROUND IMAGE (YOUR FILE)
-   =============================== */
-
+/* Background image */
 .bg{
   position: fixed;
   inset: 0;
   background:
-    linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.65)),
+    linear-gradient(rgba(0,0,0,.40), rgba(0,0,0,.50)),
     url("assets/ui/bg-main.jpg") center / cover no-repeat;
   z-index: 0;
 }
-
-/* ===============================
-   APP SHELL
-   =============================== */
 
 .app{
   position: relative;
   z-index: 1;
   width: 100%;
   height: calc(var(--vh) * 100);
-
   padding-left: calc(12px + var(--safeL));
   padding-right: calc(12px + var(--safeR));
   padding-top: calc(12px + var(--safeTop));
   padding-bottom: calc(12px + var(--safeBot));
 }
 
-/* ===============================
-   CAROUSEL
-   =============================== */
-
+/* Carousel */
 .carouselViewport{
   position: relative;
   width: 100%;
@@ -72,6 +64,19 @@ body{
   user-select: none;
 }
 
+/* “Ram” syns bara under swipe (via --swipeP) */
+.carouselViewport::after{
+  content:"";
+  position:absolute;
+  inset: calc(10px + var(--safeTop) * 0); /* keeps it clean */
+  border-radius: 28px;
+  border: 1px solid rgba(255,255,255, calc(.14 * var(--swipeP)));
+  box-shadow: 0 0 22px rgba(0,0,0, calc(.22 * var(--swipeP)));
+  pointer-events:none;
+  z-index: 8;
+}
+
+/* Track */
 .carouselTrack{
   display: flex;
   height: 100%;
@@ -89,12 +94,17 @@ body{
   width: 100%;
   height: 100%;
   position: relative;
+
+  /* Kortkänsla som bara syns när man swipar */
+  border-radius: 28px;
+  overflow: hidden;
+  background: rgba(0,0,0, calc(.10 * var(--swipeP)));
+  backdrop-filter: blur(calc(10px * var(--swipeP)));
+  -webkit-backdrop-filter: blur(calc(10px * var(--swipeP)));
+  border: 1px solid rgba(255,255,255, calc(.10 * var(--swipeP)));
 }
 
-/* ===============================
-   SLIDE 1 – BRUTALIST DATE
-   =============================== */
-
+/* Slide 1 date */
 .dateBlock{
   position: absolute;
   top: calc(18px + var(--safeTop));
@@ -108,16 +118,9 @@ body{
 
   text-shadow: 0 0 18px rgba(0,0,0,.35);
 }
+.dateLine{ margin:0; padding:0; }
 
-.dateLine{
-  margin: 0;
-  padding: 0;
-}
-
-/* ===============================
-   PLACEHOLDER SLIDES
-   =============================== */
-
+/* Placeholder slides */
 .placeholder{
   position: absolute;
   inset: 0;
@@ -126,23 +129,18 @@ body{
   text-align: center;
   opacity: .9;
 }
-
 .phTitle{
   font-weight: 800;
   letter-spacing: .02em;
   font-size: clamp(22px, 4.2vw, 34px);
 }
-
 .phSub{
   margin-top: 8px;
   font-size: 13px;
   color: var(--muted);
 }
 
-/* ===============================
-   3 GROUP DOTS (ALWAYS VISIBLE)
-   =============================== */
-
+/* 3 dots */
 .tripDots{
   position: absolute;
   left: 50%;
@@ -153,7 +151,6 @@ body{
   z-index: 10;
   pointer-events: none;
 }
-
 .tDot{
   width: 6px;
   height: 6px;
@@ -161,15 +158,9 @@ body{
   background: var(--dot);
   opacity: .9;
 }
+.tDot.isActive{ background: var(--dotOn); }
 
-.tDot.isActive{
-  background: var(--dotOn);
-}
-
-/* ===============================
-   EDGE HOT ZONE
-   =============================== */
-
+/* Edge zone */
 .edgeZone{
   position: fixed;
   top: 0;
@@ -180,10 +171,7 @@ body{
   background: transparent;
 }
 
-/* ===============================
-   EDGE SELECTOR PANEL (GLASS)
-   =============================== */
-
+/* Edge selector panel (glass) */
 .edgeSelector{
   position: fixed;
   top: 0;
@@ -215,10 +203,6 @@ body{
   will-change: transform, opacity;
 }
 
-/* ===============================
-   EDGE BACKDROP
-   =============================== */
-
 .edgeBackdrop{
   position: fixed;
   inset: 0;
@@ -233,23 +217,18 @@ body.edgeActive .edgeBackdrop{
   opacity: 1;
   pointer-events: auto;
 }
-
 body.edgeActive .edgeSelector{
   opacity: 1;
   pointer-events: auto;
 }
 
-/* ===============================
-   EDGE DOT COLUMN
-   =============================== */
-
+/* Edge dots */
 .edgeDots{
   position: relative;
   display: grid;
   gap: 18px;
   padding-left: 10px;
 }
-
 .edgeDot{
   width: 6px;
   height: 6px;
@@ -258,10 +237,7 @@ body.edgeActive .edgeSelector{
   opacity: .6;
 }
 
-/* ===============================
-   TURQUOISE PICKER (FILLED NEON)
-   =============================== */
-
+/* Turquoise picker */
 .edgePicker{
   position: absolute;
   left: calc(18px + var(--safeL));
@@ -281,9 +257,72 @@ body.edgeActive .edgeSelector{
   will-change: transform, opacity;
 }
 
-/* ===============================
-   REDUCE MOTION
-   =============================== */
+/* Section overlay (opened by edge selector) */
+.sectionWrap{
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  opacity: 0;
+  pointer-events: none;
+}
+.sectionWrap.isOpen{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sectionBackdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.40);
+}
+
+.sectionPanel{
+  position: absolute;
+  left: 50%;
+  top: calc(18px + var(--safeTop));
+  transform: translateX(-50%);
+  width: min(92vw, 520px);
+  height: min(76vh, 720px);
+  border-radius: 28px;
+
+  background: rgba(10,12,18,.22);
+  border: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  box-shadow: 0 16px 60px rgba(0,0,0,.55);
+  overflow: hidden;
+}
+
+.sectionHeader{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  padding: 14px 14px 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.sectionTitle{
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+.sectionClose{
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.15);
+  color: rgba(255,255,255,.92);
+  font-size: 22px;
+  line-height: 0;
+}
+.sectionBody{
+  padding: 16px;
+  color: rgba(255,255,255,.85);
+}
+.sectionHint{
+  color: rgba(255,255,255,.60);
+  font-size: 14px;
+}
 
 @media (prefers-reduced-motion: reduce){
   .edgeBackdrop{ transition: none; }
