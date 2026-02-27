@@ -66,7 +66,7 @@
   }
 
   /* ===============================
-     CAROUSEL (3 slides) – content swipe
+     CAROUSEL (3 slides)
   =============================== */
   let slideIndex = 0;
 
@@ -109,16 +109,13 @@
     if(!dragging || e.pointerId!==pointerId) return;
     dx = e.clientX - startX;
 
-    // resistance at ends
     if((slideIndex===0 && dx>0) || (slideIndex===CAROUSEL_COUNT-1 && dx<0)) dx*=0.35;
 
     const w=getWidth();
     track.style.transform = `translate3d(${(-slideIndex*w)+dx}px,0,0)`;
 
     const p=Math.min(1, Math.abs(dx)/w);
-    // make whole view dim a bit while swiping (optional but nice)
     viewport.style.opacity = String(1 - 0.10*p);
-    // MUCH stronger card contrast handled via CSS ::before
     setSwipeP(p);
   });
 
@@ -161,9 +158,7 @@
       item.appendChild(ic);
       item.appendChild(lb);
 
-      // tap open (optional)
       item.addEventListener("click", ()=>openSection(i));
-
       iconRail.appendChild(item);
     });
   }
@@ -186,16 +181,13 @@
   }
 
   /* ===============================
-     RUBBER BAND (RIGHT) – MORE ELASTIC + LONGER
+     RUBBER BAND (RIGHT)
   =============================== */
-
-  // More elastic curve: rises fast, keeps moving, then slowly stiffens
   function elasticPull(x){
     const t = Math.max(0, x);
-    // Two-stage feel: exponential + soft tail
-    const a = 320 * (1 - Math.exp(-t / 120));  // quick rise
-    const b = 220 * (1 - Math.exp(-t / 420));  // long tail
-    return a + b; // can go big
+    const a = 320 * (1 - Math.exp(-t / 120));
+    const b = 220 * (1 - Math.exp(-t / 420));
+    return a + b;
   }
 
   function magnetY(screenY){
@@ -233,7 +225,7 @@
   let rubberTracking=false, rubberActive=false, rubberStartX=0, rubberPointer=null, candidateIndex=0;
 
   const EDGE_THRESHOLD = 14;
-  const BEND_MAX = 260;  // MUCH longer bend
+  const BEND_MAX = 260;
 
   function openRubber(){
     rubberActive=true;
@@ -259,7 +251,7 @@
   edgeZoneR.addEventListener("pointermove",(e)=>{
     if(!rubberTracking || e.pointerId!==rubberPointer) return;
 
-    const pullRaw = rubberStartX - e.clientX; // drag left => positive
+    const pullRaw = rubberStartX - e.clientX;
 
     if(!rubberActive){
       if(pullRaw > EDGE_THRESHOLD){
@@ -269,14 +261,11 @@
       }
     }
 
-    // strong elastic
     const bend = clamp(elasticPull(pullRaw), 0, BEND_MAX);
 
-    // snap/magnet to rail rows
     const m = magnetY(e.clientY);
     candidateIndex = m.idx;
 
-    // local coords inside rubberWrap
     const rect = rubberWrap.getBoundingClientRect();
     const yLocal = (m.y - rect.top);
 
@@ -292,11 +281,9 @@
     sectionWrap.classList.add("isOpen");
     sectionWrap.setAttribute("aria-hidden","false");
 
-    // hide rubber/rail while panel open
     closeRubber();
     setBlockScroll(false);
 
-    // reset panel
     sectionPanel.style.transition = "";
     sectionPanel.style.transform = "translateX(-50%) translateY(0px)";
   }
@@ -333,7 +320,6 @@
   });
 
   rubberBackdrop.addEventListener("click", ()=>{
-    // just cancel the rubber (not opening/closing panels)
     closeRubber();
     setBlockScroll(false);
   });
@@ -346,7 +332,6 @@
   sectionPanel.addEventListener("pointerdown",(e)=>{
     if(!sectionWrap.classList.contains("isOpen")) return;
 
-    // start tracking down drag
     panelDragging=true;
     panelPid=e.pointerId;
     panelStartY=e.clientY;
@@ -360,8 +345,6 @@
     if(!panelDragging || e.pointerId!==panelPid) return;
 
     panelDY = e.clientY - panelStartY;
-
-    // allow only down movement (up has resistance)
     if(panelDY < 0) panelDY *= 0.12;
 
     sectionPanel.style.transform = `translateX(-50%) translateY(${panelDY}px)`;
@@ -374,12 +357,10 @@
     const closeThreshold = 120;
 
     if(panelDY > closeThreshold){
-      // animate out then close
       sectionPanel.style.transition = "transform 220ms cubic-bezier(.2,.9,.2,1)";
       sectionPanel.style.transform = `translateX(-50%) translateY(${Math.max(panelDY, 520)}px)`;
       setTimeout(closeSection, 180);
     } else {
-      // snap back
       sectionPanel.style.transition = "transform 220ms cubic-bezier(.2,.9,.2,1)";
       sectionPanel.style.transform = "translateX(-50%) translateY(0px)";
     }
