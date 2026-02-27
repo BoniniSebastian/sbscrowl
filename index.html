@@ -4,8 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>SB Dash v1</title>
- <link rel="stylesheet" href="style.css?v=4" />
-<script defer src="app.js?v=4"></script>
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body>
 
@@ -13,6 +12,11 @@
   <div class="bg" aria-hidden="true"></div>
 
   <main class="app" id="app">
+
+    <!-- LEFT ICON RAIL (always visible) -->
+    <nav class="iconRail" id="iconRail" aria-label="Sektioner">
+      <!-- JS renders items -->
+    </nav>
 
     <!-- CAROUSEL (3 slides) -->
     <section class="carouselViewport" id="carouselViewport" aria-label="Slides">
@@ -58,18 +62,23 @@
       </div>
     </section>
 
-    <!-- EDGE HOT ZONE (left) -->
-    <div class="edgeZone" id="edgeZone" aria-hidden="true"></div>
+    <!-- RIGHT EDGE HOT ZONE -->
+    <div class="edgeZoneR" id="edgeZoneR" aria-hidden="true"></div>
 
-    <!-- EDGE SELECTOR -->
-    <aside class="edgeSelector" id="edgeSelector" aria-label="Snabbval">
-      <div class="edgeDots" id="edgeDots" aria-hidden="true"></div>
-      <div class="edgePicker" id="edgePicker" aria-hidden="true"></div>
-    </aside>
+    <!-- RIGHT RUBBER BAND (SVG) -->
+    <div class="rubberWrap" id="rubberWrap" aria-hidden="true">
+      <svg class="rubberSvg" id="rubberSvg" viewBox="0 0 120 1000" preserveAspectRatio="none">
+        <path id="rubberPath" d="" />
+      </svg>
+    </div>
 
-    <div class="edgeBackdrop" id="edgeBackdrop" aria-hidden="true"></div>
+    <!-- TURQUOISE BALL -->
+    <div class="rubberBall" id="rubberBall" aria-hidden="true"></div>
 
-    <!-- SECTION OVERLAY (opened by edge selector) -->
+    <!-- BACKDROP when dragging -->
+    <div class="rubberBackdrop" id="rubberBackdrop" aria-hidden="true"></div>
+
+    <!-- SECTION OVERLAY (opened by rubber band) -->
     <div class="sectionWrap" id="sectionWrap" aria-hidden="true">
       <div class="sectionPanel" id="sectionPanel" role="dialog" aria-modal="true">
         <div class="sectionHeader">
@@ -77,8 +86,7 @@
           <button class="sectionClose" id="sectionClose" aria-label="Stäng">×</button>
         </div>
         <div class="sectionBody" id="sectionBody">
-          <!-- placeholder -->
-          <div class="sectionHint">Här kommer ikoner/rutor för sektionen sen.</div>
+          <div class="sectionHint">Här kommer innehåll/ikoner för sektionen sen.</div>
         </div>
       </div>
       <div class="sectionBackdrop" id="sectionBackdrop" aria-hidden="true"></div>
@@ -86,6 +94,6 @@
 
   </main>
 
-  <script defer src="app.js?v=3"></script>
+  <script defer src="app.js?v=5"></script>
 </body>
 </html>
