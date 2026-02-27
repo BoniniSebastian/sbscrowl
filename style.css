@@ -216,19 +216,23 @@ body.panelOpen .iconRail{
   position: relative;
   overflow: hidden;
   z-index: 9;
+
+  /* NYTT: styr datumets höjd här */
+  padding-top: 4px;
+  padding-right: 14px;
 }
 
 /* Slide 1 date */
 .dateBlock{
   position: absolute;
-  top: 22px;          /* högre upp i kortet */
-  right: 14px;
+  top: 0;
+  right: 0;
+
   text-align: right;
   line-height: 1.0;
   letter-spacing: -0.02em;
   font-weight: 900;
-
-  font-size: clamp(44px, 7.6vw, 72px);  /* större */
+  font-size: clamp(44px, 7.6vw, 72px);
   text-shadow: 0 0 18px rgba(0,0,0,.35);
 }
 .dateLine{ margin:0; padding:0; }
