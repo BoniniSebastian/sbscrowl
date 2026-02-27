@@ -148,77 +148,50 @@ body.panelOpen .iconRail{
   user-select:none;
 }
 
-/* Fixed card background (STAYS STILL) */
-.carouselViewport::before{
-  content:"";
+/* TA BORT/kommentera carouselViewport::before och ::after */
+
+/* Själva kortet som allt ligger i */
+.cardShell{
   position: absolute;
   left: 50%;
-  top: calc(18px + var(--safeTop));
+  top: calc(14px + var(--safeTop));   /* så högt det går */
   transform: translateX(-50%);
-  width: min(90vw, 680px);
-  height: min(38vh, 380px);         /* halvera-ish */
+
+  width: min(88vw, 660px);
+  height: min(36vh, 360px);          /* mindre kort */
   border-radius: 28px;
 
-  /* VID SWIPE: vit “glass” istället för mörk */
+  overflow: hidden;
+
+  /* syns bara under swipe */
   background: rgba(255,255,255, calc(.00 + (.14 * var(--swipeP))));
-  border: 1px solid rgba(255,255,255, calc(.00 + (.18 * var(--swipeP))));
+  border: 1px solid rgba(255,255,255, calc(.00 + (.22 * var(--swipeP))));
   box-shadow: 0 18px 70px rgba(0,0,0, calc(.00 + (.35 * var(--swipeP))));
 
-  /* viktigt: INGEN blur som sabbar text */
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-
-  pointer-events:none;
-  z-index: 6;
+  will-change: background, border;
 }
 
-/* Optional frame edge under swipe (subtle) */
-.carouselViewport::after{
-  content:"";
-  position:absolute;
-  left: 50%;
-   top: calc(18px + var(--safeTop));
-  transform: translateX(-50%);
-  width: min(90vw, 680px);
-  height: min(38vh, 380px);
-  border-radius: 28px;
-
-  /* ramen ska bara synas när man swipar */
-  border: 1px solid rgba(255,255,255, calc(.22 * var(--swipeP)));
-
-  pointer-events:none;
-  z-index: 7;
-}
-
-/* Track still slides, but we hide moving "cards" */
+/* Track fyller kortet */
 .carouselTrack{
-  display:flex;
   height: 100%;
-  will-change: transform;
-  transform: translate3d(0,0,0);
 }
 
-/* Each slide centers content into the fixed card */
+/* Varje slide fyller kortet */
 .slide{
-  flex: 0 0 100%;
+  height: 100%;
+  display: block;     /* INTE grid/center */
+}
+
+/* slideInner fyller kortet */
+.slideInner{
   width: 100%;
   height: 100%;
-
-  display: grid;
-  place-items: center;
-}
-
-/* This is only a content wrapper now (NO background/border!) */
-.slideInner{
-  width: min(90vw, 680px);
-  height: min(38vh, 380px);
-  border-radius: 28px;
   position: relative;
   overflow: hidden;
-  z-index: 9;
+  border-radius: 28px;
 
-  /* NYTT: styr datumets höjd här */
-  padding-top: 4px;
+  /* kontroll av datumposition via padding */
+  padding-top: 8px;
   padding-right: 14px;
 }
 
@@ -227,12 +200,11 @@ body.panelOpen .iconRail{
   position: absolute;
   top: 0;
   right: 0;
-
   text-align: right;
   line-height: 1.0;
   letter-spacing: -0.02em;
   font-weight: 900;
-  font-size: clamp(64px, 7.6vw, 72px);
+  font-size: clamp(44px, 7.6vw, 72px);
   text-shadow: 0 0 18px rgba(0,0,0,.35);
 }
 .dateLine{ margin:0; padding:0; }
@@ -261,7 +233,7 @@ body.panelOpen .iconRail{
 .tripDots{
   position: absolute;
   left: 50%;
-  top: calc(18px + var(--safeTop) + min(38vh, 380px) + 10px);
+  top: calc(14px + var(--safeTop) + min(36vh, 360px) + 10px);
   transform: translateX(-50%);
   display: flex;
   gap: 10px;
