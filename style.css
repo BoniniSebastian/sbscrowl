@@ -232,7 +232,7 @@ body.panelOpen .iconRail{
   line-height: 1.0;
   letter-spacing: -0.02em;
   font-weight: 900;
-  font-size: clamp(44px, 7.6vw, 72px);
+  font-size: clamp(64px, 7.6vw, 72px);
   text-shadow: 0 0 18px rgba(0,0,0,.35);
 }
 .dateLine{ margin:0; padding:0; }
