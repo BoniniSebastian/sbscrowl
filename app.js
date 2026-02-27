@@ -233,7 +233,7 @@
   let rubberTracking=false, rubberActive=false, rubberStartX=0, rubberPointer=null, candidateIndex=0;
 
   const EDGE_THRESHOLD = 14;
-  const BEND_MAX = 340;  // MUCH longer bend
+  const BEND_MAX = 260;  // MUCH longer bend
 
   function openRubber(){
     rubberActive=true;
