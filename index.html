@@ -3,89 +3,294 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SB Dash v1</title>
-  <link rel="stylesheet" href="style.css?v=7" />
+  <title>SB Trading – v1</title>
+  <link rel="stylesheet" href="style.css?v=1" />
 </head>
 <body>
-
   <div class="bg" aria-hidden="true"></div>
 
   <main class="app" id="app">
-
-    <!-- ICON RAIL (hidden until rubber is active) -->
-    <nav class="iconRail" id="iconRail" aria-label="Sektioner"></nav>
-
-    <!-- CAROUSEL (3 slides) -->
-    <section class="carouselViewport" id="carouselViewport" aria-label="Slides">
-      <div class="cardShell" id="cardShell">
-        <div class="carouselTrack" id="carouselTrack">
-
-          <!-- SLIDE 1 (DATE) -->
-          <section class="slide" data-title="Datum">
-            <div class="slideInner">
-              <div class="dateBlock" aria-label="Dagens datum">
-                <div class="dateLine" id="dateWeekday">—</div>
-                <div class="dateLine" id="dateDayMonth">—</div>
-              </div>
-            </div>
-          </section>
-
-          <!-- SLIDE 2 -->
-          <section class="slide" data-title="Slide 2">
-            <div class="slideInner">
-              <div class="placeholder">
-                <div class="phTitle">SLIDE 2</div>
-                <div class="phSub">Placeholder</div>
-              </div>
-            </div>
-          </section>
-
-          <!-- SLIDE 3 -->
-          <section class="slide" data-title="Slide 3">
-            <div class="slideInner">
-              <div class="placeholder">
-                <div class="phTitle">SLIDE 3</div>
-                <div class="phSub">Placeholder</div>
-              </div>
-            </div>
-          </section>
-
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="dot"></div>
+        <div>
+          <div class="title">SB Trading</div>
+          <div class="subtitle" id="subTitle">Movement First</div>
         </div>
       </div>
 
-      <div class="tripDots" id="tripDots" aria-label="Sidor">
-        <span class="tDot isActive"></span>
-        <span class="tDot"></span>
-        <span class="tDot"></span>
+      <div class="modeWrap">
+        <button class="pill" id="modeBtn" type="button" aria-label="Växla läge">Strict</button>
       </div>
+    </header>
+
+    <!-- Views -->
+    <section class="views">
+      <!-- COCKPIT -->
+      <section class="view" id="view-cockpit" data-view="cockpit" aria-label="Cockpit">
+        <div class="sectionHead">
+          <div class="h1">Cockpit</div>
+          <div class="muted">Översikt per instrument</div>
+        </div>
+
+        <div class="grid" id="cockpitGrid"></div>
+
+        <div class="hint">
+          Tips: klicka ett kort → Detail. Långtryck/”Edit” i detail för att sätta Base-nivåer.
+        </div>
+      </section>
+
+      <!-- DETAIL -->
+      <section class="view" id="view-detail" data-view="detail" aria-label="Detail">
+        <div class="sectionHead row">
+          <div>
+            <div class="h1" id="detailTitle">Detail</div>
+            <div class="muted" id="detailMeta">—</div>
+          </div>
+          <button class="ghost" id="editLevelsBtn" type="button">Edit</button>
+        </div>
+
+        <div class="detailLayout">
+          <!-- Chart -->
+          <div class="card chartCard">
+            <div class="chartTop">
+              <div class="chip" id="tvSymbolChip">—</div>
+              <div class="muted small" id="tvNote">TradingView chart</div>
+            </div>
+            <div id="tvChart" class="tvChart" aria-label="TradingView chart"></div>
+          </div>
+
+          <!-- Engine panel -->
+          <div class="card panelCard">
+            <div class="stateStrip" role="tablist" aria-label="State">
+              <button class="stateBtn" id="state-reversal" type="button" data-state="REVERSAL" role="tab">Reversal</button>
+              <button class="stateBtn" id="state-base" type="button" data-state="BASE" role="tab">Base</button>
+              <button class="stateBtn" id="state-cont" type="button" data-state="CONTINUATION" role="tab">Continuation</button>
+            </div>
+
+            <div class="kv">
+              <div class="k">Energy</div>
+              <div class="v" id="energyVal">—</div>
+            </div>
+
+            <div class="kv">
+              <div class="k">Expected Move</div>
+              <div class="v" id="expMoveVal">—</div>
+            </div>
+
+            <div class="kv">
+              <div class="k">Trap Risk</div>
+              <div class="v" id="trapVal">—</div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="baseBox">
+              <div class="baseRow">
+                <div class="k">Upper</div>
+                <div class="v mono" id="upperVal">—</div>
+              </div>
+              <div class="baseRow">
+                <div class="k">Mid (No-trade)</div>
+                <div class="v mono" id="midVal">—</div>
+              </div>
+              <div class="baseRow">
+                <div class="k">Lower</div>
+                <div class="v mono" id="lowerVal">—</div>
+              </div>
+
+              <div class="proj">
+                <div class="projHead">Projections</div>
+                <div class="projRow">
+                  <div class="tag">1.0x</div><div class="mono" id="proj1">—</div>
+                </div>
+                <div class="projRow">
+                  <div class="tag">1.5x</div><div class="mono" id="proj15">—</div>
+                </div>
+                <div class="projRow">
+                  <div class="tag">2.0x</div><div class="mono" id="proj2">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="whyWrap">
+              <button class="ghost" id="whyBtn" type="button">Why?</button>
+              <div class="muted small" id="modelConf">Model confidence: —</div>
+            </div>
+
+            <div class="whySheet" id="whySheet" hidden>
+              <div class="whyTitle">Top factors</div>
+              <ul class="whyList" id="whyList"></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TRADE -->
+      <section class="view" id="view-trade" data-view="trade" aria-label="Trade">
+        <div class="sectionHead">
+          <div class="h1">Trade</div>
+          <div class="muted">Kalkyl + validator + one-tap journal</div>
+        </div>
+
+        <div class="card">
+          <div class="formGrid">
+            <label class="field">
+              <span>Instrument</span>
+              <select id="tradeInstrument"></select>
+            </label>
+
+            <label class="field">
+              <span>Timeframe</span>
+              <select id="tradeTf">
+                <option value="2">2m</option>
+                <option value="3">3m</option>
+                <option value="5" selected>5m</option>
+                <option value="15">15m</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Direction</span>
+              <select id="tradeDir">
+                <option value="L">Long</option>
+                <option value="S">Short</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Entry</span>
+              <input id="tradeEntry" inputmode="decimal" placeholder="t.ex. 2386.4" />
+            </label>
+
+            <label class="field">
+              <span>Stop</span>
+              <input id="tradeSL" inputmode="decimal" placeholder="t.ex. 2382.0" />
+            </label>
+
+            <label class="field">
+              <span>Target</span>
+              <input id="tradeTP" inputmode="decimal" placeholder="t.ex. 2396.8" />
+            </label>
+
+            <label class="field">
+              <span>Insats</span>
+              <input id="tradeStake" inputmode="decimal" placeholder="t.ex. 600" />
+            </label>
+
+            <label class="field">
+              <span>Hävstång (x)</span>
+              <input id="tradeLev" inputmode="decimal" placeholder="t.ex. 20" />
+            </label>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="resultsGrid">
+            <div class="res">
+              <div class="k">Exponering</div>
+              <div class="v mono" id="resExpo">—</div>
+            </div>
+            <div class="res">
+              <div class="k">Risk (SL)</div>
+              <div class="v mono" id="resRisk">—</div>
+            </div>
+            <div class="res">
+              <div class="k">Reward (TP)</div>
+              <div class="v mono" id="resRew">—</div>
+            </div>
+            <div class="res">
+              <div class="k">R:R</div>
+              <div class="v mono" id="resRR">—</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="goRow">
+            <div>
+              <div class="go" id="goLabel">—</div>
+              <div class="muted" id="goNote">Fyll i Entry/SL/TP + insats/hävstång</div>
+            </div>
+            <button class="pill" id="startTradeBtn" type="button">Start trade</button>
+          </div>
+        </div>
+
+        <div class="card mini">
+          <div class="sectionHead row">
+            <div>
+              <div class="h2">Performance</div>
+              <div class="muted small" id="perfLine">—</div>
+            </div>
+            <button class="ghost" id="clearJournalBtn" type="button">Reset</button>
+          </div>
+        </div>
+      </section>
     </section>
 
-    <!-- RIGHT EDGE HOT ZONE -->
-    <div class="edgeZoneR" id="edgeZoneR" aria-hidden="true"></div>
-
-    <!-- RUBBER BAND -->
-    <div class="rubberWrap" id="rubberWrap" aria-hidden="true">
-      <svg class="rubberSvg" id="rubberSvg" viewBox="0 0 120 1000" preserveAspectRatio="none">
-        <path id="rubberPath" d="" />
-      </svg>
-    </div>
-    <div class="rubberBackdrop" id="rubberBackdrop" aria-hidden="true"></div>
-
-    <!-- SECTION OVERLAY (swipe down to close) -->
-    <div class="sectionWrap" id="sectionWrap" aria-hidden="true">
-      <div class="sectionPanel" id="sectionPanel" role="dialog" aria-modal="true">
-        <div class="sectionHeader">
-          <div class="sectionTitle" id="sectionTitle">—</div>
-        </div>
-        <div class="sectionBody" id="sectionBody">
-          <div class="sectionHint">Här kommer innehåll för sektionen sen.</div>
-        </div>
-      </div>
-      <div class="sectionBackdrop" id="sectionBackdrop" aria-hidden="true"></div>
-    </div>
-
+    <!-- Bottom tabs -->
+    <nav class="tabs" aria-label="Navigation">
+      <button class="tab active" data-go="cockpit" type="button">Cockpit</button>
+      <button class="tab" data-go="detail" type="button">Detail</button>
+      <button class="tab" data-go="trade" type="button">Trade</button>
+    </nav>
   </main>
 
-  <script defer src="app.js?v=7"></script>
+  <!-- Edit levels modal -->
+  <div class="modal" id="levelsModal" hidden>
+    <div class="modalCard">
+      <div class="modalHead">
+        <div>
+          <div class="h2">Edit Base Levels</div>
+          <div class="muted small" id="levelsModalMeta">—</div>
+        </div>
+        <button class="ghost" id="closeLevelsBtn" type="button">Close</button>
+      </div>
+
+      <div class="formGrid">
+        <label class="field">
+          <span>Upper</span>
+          <input id="lvlUpper" inputmode="decimal" placeholder="—" />
+        </label>
+        <label class="field">
+          <span>Lower</span>
+          <input id="lvlLower" inputmode="decimal" placeholder="—" />
+        </label>
+      </div>
+
+      <div class="modalActions">
+        <button class="pill" id="saveLevelsBtn" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- One-tap result modal -->
+  <div class="modal" id="resultModal" hidden>
+    <div class="modalCard">
+      <div class="modalHead">
+        <div>
+          <div class="h2">Trade Result</div>
+          <div class="muted small" id="resultMeta">—</div>
+        </div>
+        <button class="ghost" id="closeResultBtn" type="button">Close</button>
+      </div>
+
+      <div class="triple">
+        <button class="bigBtn win" data-outcome="WIN" type="button">WIN</button>
+        <button class="bigBtn loss" data-outcome="LOSS" type="button">LOSS</button>
+        <button class="bigBtn be" data-outcome="BE" type="button">BE</button>
+      </div>
+
+      <div class="muted small">
+        One-tap loggar bara utfallet och sparar snapshot för modellen.
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=1"></script>
+  <!-- TradingView embed script injected by app.js -->
 </body>
 </html>
