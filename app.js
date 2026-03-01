@@ -1,378 +1,629 @@
 (() => {
-  console.log("SB Dash v1 (v7) loaded ✅");
+  /* =========================
+     SB Trading v1 – app.js
+     - Apple clean tabs
+     - Movement-first engine (v1: manual price + base levels)
+     - TradingView Advanced chart embed
+     - Trade calculator + strict/loose gate
+     - One-tap journal (Win/Loss/BE)
+     ========================= */
+
   const $ = (id) => document.getElementById(id);
 
-  /* ===== Stable viewport height (iOS) ===== */
-  function setVH(){
-    const vh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty("--vh", `${vh}px`);
-  }
-  setVH();
-  window.addEventListener("resize", setVH, { passive: true });
+  const LS = {
+    SETTINGS: "sbtr_v1_settings",
+    INSTR: "sbtr_v1_instruments",
+    JOURNAL: "sbtr_v1_journal",
+    ACTIVE: "sbtr_v1_active_trade",
+  };
 
-  /* ===== iOS scroll lock during gesture ===== */
-  let blockScroll = false;
-  document.addEventListener("touchmove", (e) => {
-    if(blockScroll) e.preventDefault();
-  }, { passive: false });
-  const setBlockScroll = (on) => (blockScroll = !!on);
+  const DEFAULT_SETTINGS = {
+    mode: "STRICT",         // STRICT | LOOSE
+    adaptAfterTrades: 50,   // we decided
+  };
 
-  /* ===== Elements ===== */
-  const viewport = $("carouselViewport");
-  const track = $("carouselTrack");
-  const tripDots = Array.from($("tripDots").querySelectorAll(".tDot"));
+  // NOTE: TradingView symbols vary by broker/feed.
+  // If a symbol doesn't load, swap it here.
+  const DEFAULT_INSTRUMENTS = [
+    { key:"XAU", name:"Gold",      tv:"OANDA:XAUUSD",  price:null, base:{upper:null, lower:null}, state:"BASE" },
+    { key:"XAG", name:"Silver",    tv:"OANDA:XAGUSD",  price:null, base:{upper:null, lower:null}, state:"BASE" },
+    { key:"ETH", name:"Ethereum",  tv:"BITSTAMP:ETHUSD", price:null, base:{upper:null, lower:null}, state:"BASE" },
+    { key:"JP225", name:"Japan 225", tv:"OANDA:JP225USD", price:null, base:{upper:null, lower:null}, state:"BASE" },
+    { key:"FR40", name:"France 40",  tv:"OANDA:FR40EUR",  price:null, base:{upper:null, lower:null}, state:"BASE" },
+    { key:"DE40", name:"Germany 40", tv:"OANDA:DE40EUR",  price:null, base:{upper:null, lower:null}, state:"BASE" },
+    { key:"OIL", name:"Oil",       tv:"TVC:USOIL",     price:null, base:{upper:null, lower:null}, state:"BASE" },
+  ];
 
-  const dateWeekday = $("dateWeekday");
-  const dateDayMonth = $("dateDayMonth");
+  // ===== State =====
+  let settings = loadLS(LS.SETTINGS, DEFAULT_SETTINGS);
+  let instruments = loadLS(LS.INSTR, DEFAULT_INSTRUMENTS);
+  let journal = loadLS(LS.JOURNAL, []); // each item = snapshot + outcome
+  let activeKey = instruments[0]?.key || "XAU";
+  let tvReady = false;
+  let tvWidget = null;
 
-  const iconRail = $("iconRail");
+  // ===== Views =====
+  const tabs = Array.from(document.querySelectorAll(".tab"));
+  const views = {
+    cockpit: $("view-cockpit"),
+    detail: $("view-detail"),
+    trade: $("view-trade"),
+  };
 
-  // Rubber
-  const edgeZoneR = $("edgeZoneR");
-  const rubberWrap = $("rubberWrap");
-  const rubberSvg = $("rubberSvg");
-  const rubberPath = $("rubberPath");
-  const rubberBackdrop = $("rubberBackdrop");
-
-  // Panel
-  const sectionWrap = $("sectionWrap");
-  const sectionPanel = $("sectionPanel");
-  const sectionTitle = $("sectionTitle");
-
-  /* ===== Config ===== */
-  const CAROUSEL_COUNT = 3;
-  const SECTIONS = ["Music","Mail","Camera","Notes","Calendar","Tools","Timer","Stats","Settings"];
-  const SECTION_COUNT = SECTIONS.length;
-
-  /* ===== Date ===== */
-  const capFirst = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
-  function renderDate(){
-    const d = new Date();
-    dateWeekday.textContent = capFirst(new Intl.DateTimeFormat("sv-SE",{weekday:"long"}).format(d));
-    const day = new Intl.DateTimeFormat("sv-SE",{day:"numeric"}).format(d);
-    const month = capFirst(new Intl.DateTimeFormat("sv-SE",{month:"long"}).format(d));
-    dateDayMonth.textContent = `${day} ${month}`;
-  }
-  renderDate();
-  setInterval(renderDate, 60_000);
-
-  /* ===== Helpers ===== */
-  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
-  const getWidth = ()=>viewport.getBoundingClientRect().width || 1;
-  const setSwipeP = (p)=>document.documentElement.style.setProperty("--swipeP", String(clamp(p,0,1)));
-
-  function updateTripDots(i){
-    tripDots.forEach((d, idx)=>d.classList.toggle("isActive", idx===i));
+  function setView(name){
+    Object.values(views).forEach(v => v.classList.remove("active"));
+    views[name].classList.add("active");
+    tabs.forEach(t => t.classList.toggle("active", t.dataset.go === name));
   }
 
-  /* ===============================
-     CAROUSEL (3 slides)
-  =============================== */
-  let slideIndex = 0;
+  // ===== Helpers =====
+  function loadLS(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      if(!raw) return structuredClone(fallback);
+      return JSON.parse(raw);
+    }catch{
+      return structuredClone(fallback);
+    }
+  }
+  function saveLS(key, val){
+    localStorage.setItem(key, JSON.stringify(val));
+  }
+  function num(v){
+    if(v === null || v === undefined) return null;
+    const s = String(v).replace(",", ".").trim();
+    if(!s) return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  }
+  function fmt(n, d=2){
+    if(n === null || n === undefined || !Number.isFinite(n)) return "—";
+    return n.toFixed(d);
+  }
 
-  function snapToSlide(i, animate=true){
-    slideIndex = clamp(i, 0, CAROUSEL_COUNT - 1);
-    const w = getWidth();
-    const x = -slideIndex * w;
+  function getInstr(key){
+    return instruments.find(x => x.key === key) || instruments[0];
+  }
 
-    if(animate){
-      track.style.transition = "transform 240ms cubic-bezier(.2,.9,.2,1)";
-      viewport.style.transition = "opacity 180ms ease";
-    } else {
-      track.style.transition = "";
-      viewport.style.transition = "";
+  // ===== Movement-first Engine (v1) =====
+  // In v1 we don't have OHLCV feed.
+  // We approximate movement from base size + a simple "session multiplier" stub.
+  // Later: replace with true ATR/BB-width/vol metrics.
+  function sessionMultiplier(){
+    // Europe/Stockholm local hour
+    const h = new Date().getHours();
+    // rough heuristic: EU open 08-10, US open 15-17, otherwise calmer
+    if(h >= 8 && h <= 10) return 1.15;
+    if(h >= 15 && h <= 17) return 1.25;
+    if(h >= 11 && h <= 13) return 0.85;
+    return 1.0;
+  }
+
+  function computeEngine(instr, tfMin){
+    const upper = num(instr.base?.upper);
+    const lower = num(instr.base?.lower);
+    const price = num(instr.price);
+
+    // base geometry
+    const haveBase = Number.isFinite(upper) && Number.isFinite(lower) && upper > lower;
+    const range = haveBase ? (upper - lower) : null;
+    const mid = haveBase ? (upper + lower)/2 : null;
+
+    // expected move: start with range multiple adjusted by session
+    // v1: base potential depends on range + session
+    const sm = sessionMultiplier();
+    const baseMult = haveBase ? (1.2 * sm) : null; // default "energy"
+    const expected = haveBase ? (range * baseMult) : null;
+
+    // energy score (0-100): v1 simplified
+    // range relative to price (if price known) helps normalize across instruments
+    let energy = null;
+    if(haveBase && Number.isFinite(price) && price > 0){
+      const rel = (range / price) * 100; // %
+      // scale: small rel => low energy, bigger rel => higher
+      energy = clamp(Math.round(rel * 120 * sm), 0, 100);
+    }else if(haveBase){
+      energy = clamp(Math.round(range * 8 * sm), 0, 100);
     }
 
-    track.style.transform = `translate3d(${x}px,0,0)`;
-    viewport.style.opacity = "1";
-    setSwipeP(0);
-
-    if(animate){
-      setTimeout(()=>{ track.style.transition=""; viewport.style.transition=""; }, 260);
+    // trap risk: v1 rule
+    // If base is tiny (low range) -> high chop -> high trap
+    let trap = "—";
+    if(haveBase && Number.isFinite(price) && price > 0){
+      const rel = (range / price) * 100;
+      if(rel < 0.08) trap = "High";
+      else if(rel < 0.16) trap = "Medium";
+      else trap = "Low";
+    }else if(haveBase){
+      trap = range < 1 ? "High" : (range < 4 ? "Medium" : "Low");
     }
-    updateTripDots(slideIndex);
+
+    // projections based on range multiples (up/down)
+    const proj = haveBase ? {
+      p1:  { up: upper + 1.0*range, dn: lower - 1.0*range },
+      p15: { up: upper + 1.5*range, dn: lower - 1.5*range },
+      p2:  { up: upper + 2.0*range, dn: lower - 2.0*range },
+    } : null;
+
+    // model confidence: v1 derived from energy + having base + session
+    let conf = null;
+    if(energy !== null){
+      conf = clamp(Math.round(45 + (energy*0.45) + (sm-1)*30), 0, 99);
+    }
+
+    // factor list for "Why?"
+    const factors = [];
+    if(haveBase) factors.push({ label:"Base range defined", score:+12 });
+    if(expected !== null) factors.push({ label:`Session multiplier ${fmt(sm,2)}x`, score: Math.round((sm-1)*40) });
+    if(energy !== null) factors.push({ label:`Relative range / movement`, score: Math.round(energy/6) });
+    if(trap !== "—") factors.push({ label:`Trap risk: ${trap}`, score: trap==="Low"? +8 : (trap==="Medium"? -2 : -10) });
+
+    return {
+      upper, lower, mid, range,
+      expectedMove: expected,
+      energy,
+      trap,
+      conf,
+      projections: proj,
+      factors,
+    };
   }
 
-  let dragging=false, startX=0, dx=0, pointerId=null;
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
-  viewport.addEventListener("pointerdown",(e)=>{
-    if(document.body.classList.contains("rubberActive")) return;
-    if(sectionWrap.classList.contains("isOpen")) return;
-
-    setBlockScroll(true);
-    dragging=true; pointerId=e.pointerId; startX=e.clientX; dx=0;
-    viewport.setPointerCapture(pointerId);
-    track.style.transition=""; viewport.style.transition="";
-  });
-
-  viewport.addEventListener("pointermove",(e)=>{
-    if(!dragging || e.pointerId!==pointerId) return;
-    dx = e.clientX - startX;
-
-    if((slideIndex===0 && dx>0) || (slideIndex===CAROUSEL_COUNT-1 && dx<0)) dx*=0.35;
-
-    const w=getWidth();
-    track.style.transform = `translate3d(${(-slideIndex*w)+dx}px,0,0)`;
-
-    const p=Math.min(1, Math.abs(dx)/w);
-    viewport.style.opacity = String(1 - 0.10*p);
-    setSwipeP(p);
-  });
-
-  function endDrag(){
-    if(!dragging) return;
-    dragging=false;
-
-    const w=getWidth();
-    const p=Math.abs(dx)/w;
-    let next=slideIndex;
-    if(p>0.18) next = dx<0 ? slideIndex+1 : slideIndex-1;
-
-    snapToSlide(next,true);
-    dx=0; pointerId=null;
-    setBlockScroll(false);
+  // ===== Strict/Loose Gate =====
+  // v1 thresholds (will become per-instrument, then adaptive after 50 trades)
+  function strictThresholds(tfMin){
+    // micro TF needs more movement to beat noise
+    if(tfMin <= 3) return { minEnergy: 62, minExpPct: 0.22 };
+    if(tfMin <= 5) return { minEnergy: 58, minExpPct: 0.18 };
+    return { minEnergy: 52, minExpPct: 0.14 };
   }
 
-  viewport.addEventListener("pointerup",(e)=>{ if(pointerId!==null && e.pointerId!==pointerId) return; endDrag(); });
-  viewport.addEventListener("pointercancel",(e)=>{ if(pointerId!==null && e.pointerId!==pointerId) return; endDrag(); });
-  window.addEventListener("resize", ()=>snapToSlide(slideIndex,false), {passive:true});
+  function getExpectedPct(engine, price){
+    if(engine.expectedMove === null || !Number.isFinite(price) || price <= 0) return null;
+    // expected move approx as percent of price using 1.2x*range
+    // (expectedMove is points; dividing by price gives percent)
+    return (engine.expectedMove / price) * 100;
+  }
 
-  /* ===============================
-     ICON RAIL
-  =============================== */
-  let activeSection = 0;
+  // ===== UI Renders =====
+  function renderMode(){
+    $("modeBtn").textContent = settings.mode === "STRICT" ? "Strict" : "Loose";
+    $("subTitle").textContent = settings.mode === "STRICT" ? "Movement gate ON" : "Movement gate OFF";
+  }
 
-  function renderRail(){
-    iconRail.innerHTML = "";
-    SECTIONS.forEach((label, i)=>{
-      const item=document.createElement("div");
-      item.className="railItem"+(i===activeSection?" isActive":"");
+  function renderCockpit(){
+    const grid = $("cockpitGrid");
+    grid.innerHTML = "";
 
-      const ic=document.createElement("div");
-      ic.className="railIcon";
+    instruments.forEach(instr => {
+      const engine = computeEngine(instr, 5);
+      const state = instr.state || "BASE";
 
-      const lb=document.createElement("div");
-      lb.className="railLabel";
-      lb.textContent=label;
+      const card = document.createElement("div");
+      card.className = "instrumentCard";
+      card.onclick = () => {
+        activeKey = instr.key;
+        setView("detail");
+        renderDetail();
+      };
 
-      item.appendChild(ic);
-      item.appendChild(lb);
+      const chipClass = state === "BASE" ? "base" : (state === "CONTINUATION" ? "cont" : "rev");
 
-      item.addEventListener("click", ()=>openSection(i));
-      iconRail.appendChild(item);
+      card.innerHTML = `
+        <div class="topRow">
+          <div class="sym">${instr.key}</div>
+          <div class="stateChip ${chipClass}">${state}</div>
+        </div>
+        <div class="metricRow">
+          <div class="metric">
+            <div class="k">Energy</div>
+            <div class="v">${engine.energy ?? "—"}</div>
+          </div>
+          <div class="metric">
+            <div class="k">Expected</div>
+            <div class="v">${engine.expectedMove !== null ? fmt(engine.expectedMove,2) : "—"}</div>
+          </div>
+          <div class="metric">
+            <div class="k">Trap</div>
+            <div class="v">${engine.trap}</div>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
     });
   }
 
-  function setActiveSection(i){
-    activeSection = clamp(i,0,SECTION_COUNT-1);
-    Array.from(iconRail.querySelectorAll(".railItem")).forEach((el, idx)=>{
-      el.classList.toggle("isActive", idx===activeSection);
-    });
+  function setStateButtons(state){
+    const map = {
+      REVERSAL: $("state-reversal"),
+      BASE: $("state-base"),
+      CONTINUATION: $("state-cont"),
+    };
+    Object.entries(map).forEach(([k,btn]) => btn.classList.toggle("active", k===state));
   }
 
-  renderRail();
+  function renderDetail(){
+    const instr = getInstr(activeKey);
+    const tfMin = 5; // detail uses general snapshot in v1
+    const engine = computeEngine(instr, tfMin);
 
-  function railCenters(){
-    const items = Array.from(iconRail.querySelectorAll(".railItem"));
-    return items.map(el=>{
-      const r=el.getBoundingClientRect();
-      return r.top + r.height/2;
-    });
-  }
+    $("detailTitle").textContent = `${instr.key} – ${instr.name}`;
+    $("detailMeta").textContent = `TV: ${instr.tv || "—"}`;
 
-  /* ===============================
-     RUBBER BAND (RIGHT)
-  =============================== */
-  function elasticPull(x){
-    const t = Math.max(0, x);
-    const a = 320 * (1 - Math.exp(-t / 120));
-    const b = 220 * (1 - Math.exp(-t / 420));
-    return a + b;
-  }
+    $("tvSymbolChip").textContent = instr.tv || "—";
 
-  function magnetY(screenY){
-    const centers = railCenters();
-    let best=0, bestD=Infinity;
-    for(let i=0;i<centers.length;i++){
-      const d=Math.abs(centers[i]-screenY);
-      if(d<bestD){ bestD=d; best=i; }
+    // state
+    setStateButtons(instr.state || "BASE");
+
+    // kvs
+    $("energyVal").textContent = engine.energy ?? "—";
+    $("expMoveVal").textContent = engine.expectedMove !== null ? `${fmt(engine.expectedMove,2)} pts` : "—";
+    $("trapVal").textContent = engine.trap;
+
+    $("upperVal").textContent = engine.upper !== null ? fmt(engine.upper,2) : "—";
+    $("lowerVal").textContent = engine.lower !== null ? fmt(engine.lower,2) : "—";
+    $("midVal").textContent   = engine.mid !== null   ? fmt(engine.mid,2)   : "—";
+
+    if(engine.projections){
+      $("proj1").textContent  = `Up ${fmt(engine.projections.p1.up,2)} | Down ${fmt(engine.projections.p1.dn,2)}`;
+      $("proj15").textContent = `Up ${fmt(engine.projections.p15.up,2)} | Down ${fmt(engine.projections.p15.dn,2)}`;
+      $("proj2").textContent  = `Up ${fmt(engine.projections.p2.up,2)} | Down ${fmt(engine.projections.p2.dn,2)}`;
+    }else{
+      $("proj1").textContent = $("proj15").textContent = $("proj2").textContent = "—";
     }
-    const target=centers[best] ?? (window.innerHeight/2);
 
-    const dist=Math.abs(target-screenY);
-    const strength=1 - clamp(dist/170, 0, 1);
-    const snapped = screenY + (target - screenY) * (0.62 * strength);
+    $("modelConf").textContent = `Model confidence: ${engine.conf ?? "—"}`;
 
-    return { y: snapped, idx: best };
+    // why list
+    const list = $("whyList");
+    list.innerHTML = "";
+    engine.factors.slice(0,6).forEach(f => {
+      const li = document.createElement("li");
+      const s = f.score >= 0 ? `+${f.score}` : `${f.score}`;
+      li.textContent = `${f.label} (${s})`;
+      list.appendChild(li);
+    });
+
+    // chart embed
+    mountTradingView(instr.tv);
+
+    // update trade instrument dropdown default
+    $("tradeInstrument").value = instr.key;
   }
 
-  function setRubberPath(bendPx, yLocal){
-    const rect = rubberWrap.getBoundingClientRect();
-    const H = rect.height;
-    const W = 140;
-
-    const top = 14;
-    const bot = H - 14;
-    const x0 = W - 16;
-
-    const cx = x0 - bendPx;
-    const cy = clamp(yLocal, top, bot);
-
-    rubberSvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-    rubberPath.setAttribute("d", `M ${x0} ${top} Q ${cx} ${cy} ${x0} ${bot}`);
-  }
-
-  let rubberTracking=false, rubberActive=false, rubberStartX=0, rubberPointer=null, candidateIndex=0;
-
-  const EDGE_THRESHOLD = 14;
-  const BEND_MAX = 260;
-
-  function openRubber(){
-    rubberActive=true;
-    document.body.classList.add("rubberActive");
-  }
-
-  function closeRubber(){
-    rubberActive=false;
-    document.body.classList.remove("rubberActive");
-  }
-
-  edgeZoneR.addEventListener("pointerdown",(e)=>{
-    if(sectionWrap.classList.contains("isOpen")) return;
-
-    setBlockScroll(true);
-    rubberTracking=true;
-    rubberPointer=e.pointerId;
-    rubberStartX=e.clientX;
-
-    edgeZoneR.setPointerCapture(rubberPointer);
-  });
-
-  edgeZoneR.addEventListener("pointermove",(e)=>{
-    if(!rubberTracking || e.pointerId!==rubberPointer) return;
-
-    const pullRaw = rubberStartX - e.clientX;
-
-    if(!rubberActive){
-      if(pullRaw > EDGE_THRESHOLD){
-        openRubber();
-      } else {
+  // ===== TradingView Embed =====
+  function ensureTradingViewScript(){
+    return new Promise((resolve) => {
+      if(window.TradingView){
+        tvReady = true;
+        resolve(true);
         return;
+      }
+      const s = document.createElement("script");
+      s.src = "https://s3.tradingview.com/tv.js";
+      s.async = true;
+      s.onload = () => { tvReady = true; resolve(true); };
+      s.onerror = () => resolve(false);
+      document.head.appendChild(s);
+    });
+  }
+
+  async function mountTradingView(symbol){
+    const el = $("tvChart");
+    el.innerHTML = ""; // remount
+
+    const ok = await ensureTradingViewScript();
+    if(!ok || !window.TradingView){
+      el.innerHTML = `<div style="padding:14px;color:rgba(255,255,255,.7)">TradingView script blocked or offline.</div>`;
+      return;
+    }
+
+    // Create widget
+    try{
+      tvWidget = new window.TradingView.widget({
+        autosize: true,
+        symbol: symbol || "OANDA:XAUUSD",
+        interval: "5",
+        timezone: "Europe/Stockholm",
+        theme: "dark",
+        style: "1",
+        locale: "sv_SE",
+        toolbar_bg: "rgba(0,0,0,0)",
+        enable_publishing: false,
+        allow_symbol_change: false,
+        hide_top_toolbar: false,
+        hide_side_toolbar: false,
+        container_id: "tvChart",
+      });
+    }catch(e){
+      el.innerHTML = `<div style="padding:14px;color:rgba(255,255,255,.7)">TradingView widget failed to load.</div>`;
+    }
+  }
+
+  // ===== Trade calculator + validator =====
+  function renderTradeSelectors(){
+    const sel = $("tradeInstrument");
+    sel.innerHTML = instruments.map(i => `<option value="${i.key}">${i.key} – ${i.name}</option>`).join("");
+    sel.value = activeKey;
+  }
+
+  function calcPL({dir, entry, exit, stake, lev}){
+    // CFD-like approx: P/L ≈ exposure * %move (directional)
+    const expo = stake * lev;
+    const movePct = dir === "L" ? (exit - entry) / entry : (entry - exit) / entry;
+    return expo * movePct;
+  }
+
+  function validateTrade(){
+    const instr = getInstr($("tradeInstrument").value);
+    const tfMin = Number($("tradeTf").value);
+
+    const dir = $("tradeDir").value;
+    const entry = num($("tradeEntry").value);
+    const sl = num($("tradeSL").value);
+    const tp = num($("tradeTP").value);
+    const stake = num($("tradeStake").value);
+    const lev = num($("tradeLev").value);
+
+    // Results
+    if(![entry,sl,tp,stake,lev].every(Number.isFinite) || entry <= 0 || stake <= 0 || lev <= 0){
+      $("resExpo").textContent = "—";
+      $("resRisk").textContent = "—";
+      $("resRew").textContent  = "—";
+      $("resRR").textContent   = "—";
+      $("goLabel").textContent = "—";
+      $("goLabel").className = "go neutral";
+      $("goNote").textContent = "Fyll i Entry/SL/TP + insats/hävstång";
+      return { ok:false };
+    }
+
+    const expo = stake * lev;
+    $("resExpo").textContent = `${fmt(expo,0)}`;
+
+    const risk = calcPL({dir, entry, exit: sl, stake, lev});     // will be negative for correct stop side
+    const rew  = calcPL({dir, entry, exit: tp, stake, lev});
+
+    // make them "display" as positive/negative properly
+    $("resRisk").textContent = `${fmt(risk,0)}`;
+    $("resRew").textContent  = `${fmt(rew,0)}`;
+
+    const riskAbs = Math.abs(risk);
+    const rewAbs = Math.abs(rew);
+    const rr = riskAbs > 0 ? (rewAbs / riskAbs) : null;
+    $("resRR").textContent = rr !== null ? `1 : ${fmt(rr,2)}` : "—";
+
+    // Movement gate
+    const engine = computeEngine(instr, tfMin);
+    const expectedPct = getExpectedPct(engine, num(instr.price) ?? entry); // use manual price if exists, else entry
+    const th = strictThresholds(tfMin);
+
+    let decision = "CAUTION";
+    let note = "";
+
+    // Basic sanity: stop must be on correct side
+    const stopOk = (dir === "L" ? sl < entry : sl > entry);
+    const tpOk = (dir === "L" ? tp > entry : tp < entry);
+    if(!stopOk || !tpOk){
+      decision = "NO";
+      note = "Stop/Target ligger på fel sida om entry.";
+    }else{
+      // Strict movement blocking
+      if(settings.mode === "STRICT"){
+        const energyOk = (engine.energy ?? 0) >= th.minEnergy;
+        const expOk = expectedPct !== null ? expectedPct >= th.minExpPct : true; // if we don't know pct, don't block on it
+        if(!energyOk || !expOk){
+          decision = "NO";
+          note = "Insufficient movement (low energy/expected move).";
+        }else if(rr !== null && rr < 1.2){
+          decision = "CAUTION";
+          note = "R:R är svagt för din hävstång.";
+        }else{
+          decision = "GO";
+          note = "Movement gate OK + rimlig R:R.";
+        }
+      }else{
+        // Loose
+        if(rr !== null && rr < 1.1){
+          decision = "CAUTION";
+          note = "R:R är låg (Loose mode tillåter).";
+        }else{
+          decision = "GO";
+          note = "OK (Loose mode).";
+        }
       }
     }
 
-    const bend = clamp(elasticPull(pullRaw), 0, BEND_MAX);
+    $("goLabel").textContent = decision;
+    $("goLabel").className = "go " + (decision==="GO" ? "good" : (decision==="NO" ? "bad" : "neutral"));
+    $("goNote").textContent = note || "—";
 
-    const m = magnetY(e.clientY);
-    candidateIndex = m.idx;
-
-    const rect = rubberWrap.getBoundingClientRect();
-    const yLocal = (m.y - rect.top);
-
-    setRubberPath(bend, yLocal);
-    setActiveSection(candidateIndex);
-  });
-
-  function openSection(i){
-    setActiveSection(i);
-    sectionTitle.textContent = SECTIONS[i];
-
-    document.body.classList.add("panelOpen");
-    sectionWrap.classList.add("isOpen");
-    sectionWrap.setAttribute("aria-hidden","false");
-
-    closeRubber();
-    setBlockScroll(false);
-
-    sectionPanel.style.transition = "";
-    sectionPanel.style.transform = "translateX(-50%) translateY(0px)";
+    return {
+      ok:true,
+      decision,
+      snapshot: makeSnapshot(instr, tfMin, decision),
+    };
   }
 
-  function closeSection(){
-    document.body.classList.remove("panelOpen");
-    sectionWrap.classList.remove("isOpen");
-    sectionWrap.setAttribute("aria-hidden","true");
-    setBlockScroll(false);
+  function makeSnapshot(instr, tfMin, decision){
+    const engine = computeEngine(instr, tfMin);
+    return {
+      t: Date.now(),
+      instrument: instr.key,
+      tf: tfMin,
+      mode: settings.mode,
+      state: instr.state || "BASE",
+      energy: engine.energy,
+      expectedMove: engine.expectedMove,
+      trap: engine.trap,
+      conf: engine.conf,
+      decision,
+    };
   }
 
-  function endRubber(commit){
-    if(!rubberTracking) return;
-    rubberTracking=false;
+  // ===== Journal =====
+  function openResultModal(snapshot){
+    saveLS(LS.ACTIVE, snapshot);
+    $("resultMeta").textContent = `${snapshot.instrument} • ${snapshot.tf}m • ${snapshot.state} • ${snapshot.mode} • ${snapshot.decision}`;
+    $("resultModal").hidden = false;
+  }
 
-    if(rubberActive && commit){
-      openSection(candidateIndex);
-    } else {
-      closeRubber();
-      setBlockScroll(false);
+  function closeResultModal(){
+    $("resultModal").hidden = true;
+  }
+
+  function logOutcome(outcome){
+    const snap = loadLS(LS.ACTIVE, null);
+    if(!snap) return;
+
+    journal.push({ ...snap, outcome });
+    saveLS(LS.JOURNAL, journal);
+    localStorage.removeItem(LS.ACTIVE);
+    closeResultModal();
+    renderPerformance();
+  }
+
+  function renderPerformance(){
+    const total = journal.length;
+    const w = journal.filter(x => x.outcome === "WIN").length;
+    const l = journal.filter(x => x.outcome === "LOSS").length;
+    const b = journal.filter(x => x.outcome === "BE").length;
+    const wr = total ? Math.round((w/total)*100) : null;
+
+    let line = "—";
+    if(total){
+      line = `Trades: ${total} • Win: ${w} • Loss: ${l} • BE: ${b} • Winrate: ${wr}%`;
+      if(total < settings.adaptAfterTrades){
+        line += ` • Adaptive starts at ${settings.adaptAfterTrades}`;
+      }else{
+        line += ` • Adaptive ACTIVE`;
+      }
     }
+    $("perfLine").textContent = line;
   }
 
-  edgeZoneR.addEventListener("pointerup",(e)=>{
-    if(rubberPointer!==null && e.pointerId!==rubberPointer) return;
-    endRubber(true);
-    rubberPointer=null;
-  });
-
-  edgeZoneR.addEventListener("pointercancel",(e)=>{
-    if(rubberPointer!==null && e.pointerId!==rubberPointer) return;
-    endRubber(false);
-    rubberPointer=null;
-  });
-
-  rubberBackdrop.addEventListener("click", ()=>{
-    closeRubber();
-    setBlockScroll(false);
-  });
-
-  /* ===============================
-     PANEL: swipe DOWN to close (ONLY)
-  =============================== */
-  let panelDragging=false, panelStartY=0, panelDY=0, panelPid=null;
-
-  sectionPanel.addEventListener("pointerdown",(e)=>{
-    if(!sectionWrap.classList.contains("isOpen")) return;
-
-    panelDragging=true;
-    panelPid=e.pointerId;
-    panelStartY=e.clientY;
-    panelDY=0;
-
-    sectionPanel.setPointerCapture(panelPid);
-    sectionPanel.style.transition = "";
-  });
-
-  sectionPanel.addEventListener("pointermove",(e)=>{
-    if(!panelDragging || e.pointerId!==panelPid) return;
-
-    panelDY = e.clientY - panelStartY;
-    if(panelDY < 0) panelDY *= 0.12;
-
-    sectionPanel.style.transform = `translateX(-50%) translateY(${panelDY}px)`;
-  });
-
-  function endPanelDrag(){
-    if(!panelDragging) return;
-    panelDragging=false;
-
-    const closeThreshold = 120;
-
-    if(panelDY > closeThreshold){
-      sectionPanel.style.transition = "transform 220ms cubic-bezier(.2,.9,.2,1)";
-      sectionPanel.style.transform = `translateX(-50%) translateY(${Math.max(panelDY, 520)}px)`;
-      setTimeout(closeSection, 180);
-    } else {
-      sectionPanel.style.transition = "transform 220ms cubic-bezier(.2,.9,.2,1)";
-      sectionPanel.style.transform = "translateX(-50%) translateY(0px)";
-    }
-
-    panelDY=0; panelPid=null;
+  function resetJournal(){
+    journal = [];
+    saveLS(LS.JOURNAL, journal);
+    renderPerformance();
   }
 
-  sectionPanel.addEventListener("pointerup",(e)=>{ if(panelPid!==null && e.pointerId!==panelPid) return; endPanelDrag(); });
-  sectionPanel.addEventListener("pointercancel",(e)=>{ if(panelPid!==null && e.pointerId!==panelPid) return; endPanelDrag(); });
+  // ===== Edit levels =====
+  function openLevelsModal(){
+    const instr = getInstr(activeKey);
+    $("levelsModalMeta").textContent = `${instr.key} • ${instr.name}`;
+    $("lvlUpper").value = instr.base?.upper ?? "";
+    $("lvlLower").value = instr.base?.lower ?? "";
+    $("levelsModal").hidden = false;
+  }
+  function closeLevelsModal(){ $("levelsModal").hidden = true; }
 
-  /* ===== Init ===== */
-  snapToSlide(0,false);
-  setActiveSection(0);
+  function saveLevels(){
+    const instr = getInstr(activeKey);
+    const upper = num($("lvlUpper").value);
+    const lower = num($("lvlLower").value);
 
+    // save even if null, but if one is set require both for base
+    instr.base = instr.base || { upper:null, lower:null };
+    instr.base.upper = upper;
+    instr.base.lower = lower;
+
+    saveLS(LS.INSTR, instruments);
+    closeLevelsModal();
+    renderDetail();
+    renderCockpit();
+  }
+
+  // ===== Wiring =====
+  function wire(){
+    // Tabs
+    tabs.forEach(btn => btn.addEventListener("click", () => {
+      const v = btn.dataset.go;
+      setView(v);
+      if(v === "cockpit") renderCockpit();
+      if(v === "detail") renderDetail();
+      if(v === "trade") validateTrade();
+    }));
+
+    // Mode toggle
+    $("modeBtn").addEventListener("click", () => {
+      settings.mode = settings.mode === "STRICT" ? "LOOSE" : "STRICT";
+      saveLS(LS.SETTINGS, settings);
+      renderMode();
+      validateTrade();
+    });
+
+    // State buttons
+    const stateBtns = [$("state-reversal"), $("state-base"), $("state-cont")];
+    stateBtns.forEach(b => b.addEventListener("click", () => {
+      const instr = getInstr(activeKey);
+      instr.state = b.dataset.state;
+      saveLS(LS.INSTR, instruments);
+      setStateButtons(instr.state);
+      renderCockpit();
+      validateTrade();
+    }));
+
+    // Why toggle
+    $("whyBtn").addEventListener("click", () => {
+      const s = $("whySheet");
+      s.hidden = !s.hidden;
+    });
+
+    // Edit levels
+    $("editLevelsBtn").addEventListener("click", openLevelsModal);
+    $("closeLevelsBtn").addEventListener("click", closeLevelsModal);
+    $("saveLevelsBtn").addEventListener("click", saveLevels);
+
+    // Trade selectors
+    renderTradeSelectors();
+    ["tradeInstrument","tradeTf","tradeDir","tradeEntry","tradeSL","tradeTP","tradeStake","tradeLev"].forEach(id => {
+      $(id).addEventListener("input", validateTrade);
+      $(id).addEventListener("change", validateTrade);
+    });
+
+    // Start trade -> open result
+    $("startTradeBtn").addEventListener("click", () => {
+      const r = validateTrade();
+      if(!r.ok) return;
+      openResultModal(r.snapshot);
+    });
+
+    // Result modal actions
+    $("closeResultBtn").addEventListener("click", closeResultModal);
+    $("resultModal").addEventListener("click", (e) => {
+      if(e.target === $("resultModal")) closeResultModal();
+    });
+    document.querySelectorAll(".bigBtn").forEach(b => {
+      b.addEventListener("click", () => logOutcome(b.dataset.outcome));
+    });
+
+    // Reset journal
+    $("clearJournalBtn").addEventListener("click", resetJournal);
+
+    // Levels modal outside click
+    $("levelsModal").addEventListener("click", (e) => {
+      if(e.target === $("levelsModal")) closeLevelsModal();
+    });
+  }
+
+  // ===== Init =====
+  function init(){
+    // Ensure instruments always have required fields (future-proof)
+    instruments = instruments.map(x => ({
+      ...x,
+      base: x.base || { upper:null, lower:null },
+      state: x.state || "BASE",
+    }));
+    saveLS(LS.INSTR, instruments);
+
+    renderMode();
+    setView("cockpit");
+    renderCockpit();
+    renderPerformance();
+    wire();
+  }
+
+  init();
 })();
